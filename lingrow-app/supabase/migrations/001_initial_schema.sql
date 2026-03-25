@@ -73,7 +73,7 @@ COMMENT ON COLUMN card_progress.consecutive_easy IS 'Contador de EASY consecutiv
 
 CREATE INDEX IF NOT EXISTS idx_card_progress_user_id ON card_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_card_progress_next_review ON card_progress(user_id, next_review);
-CREATE INDEX IF NOT EXISTS idx_card_progress_due ON card_progress(user_id, next_review) WHERE next_review <= NOW();
+CREATE INDEX IF NOT EXISTS idx_card_progress_due ON card_progress(user_id, next_review);
 
 -- ============================================================
 -- USER_SETTINGS — Preferências do usuário
