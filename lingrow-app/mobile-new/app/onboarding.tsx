@@ -50,7 +50,11 @@ export default function OnboardingScreen() {
   };
 
   const finish = async () => {
-    await saveSettings({ onboardingDone: true });
+    try {
+      await saveSettings({ onboardingDone: true });
+    } catch {
+      // mesmo com erro, prossegue — usuário não deve ficar preso no onboarding
+    }
     router.replace('/(tabs)');
   };
 

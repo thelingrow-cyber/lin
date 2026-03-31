@@ -46,19 +46,24 @@ export default function CriarScreen() {
       return;
     }
     setSaving(true);
-    await saveCard({
-      id: `card-${Date.now()}`,
-      deckId: selectedDeck.id,
-      front: front.trim(),
-      back: back.trim(),
-      notes: notes.trim() || undefined,
-      position: Date.now(),
-    });
-    setFront('');
-    setBack('');
-    setNotes('');
-    setSaving(false);
-    Alert.alert('Card criado ✔', 'Seu card foi adicionado com sucesso!');
+    try {
+      await saveCard({
+        id: `card-${Date.now()}`,
+        deckId: selectedDeck.id,
+        front: front.trim(),
+        back: back.trim(),
+        notes: notes.trim() || undefined,
+        position: Date.now(),
+      });
+      setFront('');
+      setBack('');
+      setNotes('');
+      Alert.alert('Card criado ✔', 'Seu card foi adicionado com sucesso!');
+    } catch (e: any) {
+      Alert.alert('Erro ao salvar card', e.message ?? 'Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

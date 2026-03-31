@@ -60,10 +60,10 @@ async function getUserId(): Promise<string> {
 
 // ─── settings ────────────────────────────────────────────────────────────────
 
-export async function getSettings(): Promise<UserSettings> {
+export async function getSettings(overrideUserId?: string): Promise<UserSettings> {
   try {
-    const userId = await getUserId();
-    const { data } = await supabase
+    const userId = overrideUserId ?? await getUserId();
+    const { data, error } = await supabase
       .from('user_settings')
       .select('*')
       .eq('user_id', userId)
@@ -87,10 +87,11 @@ export async function getSettings(): Promise<UserSettings> {
 
 export async function saveSettings(settings: Partial<UserSettings>): Promise<void> {
   const userId = await getUserId();
-  const current = await getSettings();
+  const current = await getSettings(userId);
   const merged = { ...current, ...settings };
 
-  await supabase.from('user_settings').upsert({
+  const { error } = await supabase.from('user_settings').upsert({
+    id: userId,
     user_id: userId,
     onboarding_done: merged.onboardingDone,
     daily_goal: merged.dailyGoal,
@@ -100,6 +101,7 @@ export async function saveSettings(settings: Partial<UserSettings>): Promise<voi
     voice_variant: merged.voiceVariant,
     playback_speed: merged.playbackSpeed,
   }, { onConflict: 'user_id' });
+  if (error) throw error;
 }
 
 // ─── decks ───────────────────────────────────────────────────────────────────
@@ -127,7 +129,7 @@ export async function getDecks(): Promise<Deck[]> {
 
 export async function saveDeck(deck: Deck): Promise<void> {
   const userId = await getUserId();
-  await supabase.from('decks').upsert({
+  const { error } = await supabase.from('decks').upsert({
     id: deck.id,
     user_id: userId,
     name: deck.name,
@@ -135,6 +137,7 @@ export async function saveDeck(deck: Deck): Promise<void> {
     color: deck.color,
     is_built_in: deck.isBuiltIn ?? false,
   }, { onConflict: 'id' });
+  if (error) throw error;
 }
 
 // ─── cards ───────────────────────────────────────────────────────────────────
@@ -144,7 +147,8 @@ export async function getCards(deckId?: string): Promise<Card[]> {
     let query = supabase.from('cards').select('*').order('position');
     if (deckId) query = query.eq('deck_id', deckId);
 
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw error;
     return (data ?? []).map((c) => ({
       id: c.id,
       deckId: c.deck_id,
@@ -162,7 +166,7 @@ export async function getCards(deckId?: string): Promise<Card[]> {
 }
 
 export async function saveCard(card: Card): Promise<void> {
-  await supabase.from('cards').upsert({
+  const { error } = await supabase.from('cards').upsert({
     id: card.id,
     deck_id: card.deckId,
     front_text: card.front,
@@ -173,6 +177,7 @@ export async function saveCard(card: Card): Promise<void> {
     audio_url: card.audioUrl ?? null,
     position: card.position,
   }, { onConflict: 'id' });
+  if (error) throw error;
 }
 
 export async function saveCards(cards: Card[]): Promise<void> {
@@ -259,7 +264,7 @@ export async function getProgress(cardId: string): Promise<CardProgress> {
 
 export async function saveProgress(progress: CardProgress): Promise<void> {
   const userId = await getUserId();
-  await supabase.from('card_progress').upsert({
+  const { error } = await supabase.from('card_progress').upsert({
     user_id: userId,
     card_id: progress.cardId,
     repetitions: progress.repetitions,
@@ -270,6 +275,7 @@ export async function saveProgress(progress: CardProgress): Promise<void> {
     consecutive_again: progress.consecutiveAgain,
     consecutive_easy: progress.consecutiveEasy,
   }, { onConflict: 'user_id,card_id' });
+  if (error) throw error;
 }
 
 // ─── SRS algorithm ───────────────────────────────────────────────────────────

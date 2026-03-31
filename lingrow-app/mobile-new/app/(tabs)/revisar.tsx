@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -12,10 +12,16 @@ export default function RevisarScreen() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [reviewByDeck, setReviewByDeck] = useState<Record<string, number>>({});
   const [totalReview, setTotalReview] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const allDecks = await getDecks();
-    const allProgress = await getAllProgress();
+    setLoading(true);
+    try {
+    const [allDecks, allCards, allProgress] = await Promise.all([
+      getDecks(),
+      getCards(),
+      getAllProgress(),
+    ]);
     const now = new Date();
 
     const counts: Record<string, number> = {};
@@ -24,12 +30,11 @@ export default function RevisarScreen() {
     const studiedIds = new Set(allProgress.map((p) => p.cardId));
     for (const deck of allDecks) {
       const isBuiltIn = deck.id === 'deck-1000-frases';
-      const cards = await getCards(deck.id);
+      const cards = allCards.filter((c) => c.deckId === deck.id);
       const cardIds = new Set(cards.map((c) => c.id));
       const due = allProgress.filter(
         (p) => cardIds.has(p.cardId) && p.nextReview && new Date(p.nextReview) <= now
       ).length;
-      // decks manuais: inclui cards novos (nunca estudados)
       const newUnseen = isBuiltIn ? 0 : cards.filter((c) => !studiedIds.has(c.id)).length;
       const count = due + newUnseen;
       counts[deck.id] = count;
@@ -39,9 +44,25 @@ export default function RevisarScreen() {
     setDecks(allDecks);
     setReviewByDeck(counts);
     setTotalReview(total);
+    } catch (e: any) {
+      Alert.alert('Erro ao carregar revisões', e.message ?? 'Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 32 }}>📚</Text>
+          <Text style={{ color: PRIMARY, fontWeight: '700', marginTop: 12, fontSize: 16 }}>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>

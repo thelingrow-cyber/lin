@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -35,6 +36,7 @@ export default function HomeScreen() {
   const [cardsByDeck, setCardsByDeck] = useState<Record<string, number>>({});
   const [reviewCount, setReviewCount] = useState(0);
   const [learnedCount, setLearnedCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
@@ -45,16 +47,13 @@ export default function HomeScreen() {
   const DECK_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
 
   const load = useCallback(async () => {
-    const s = await getSettings();
+    setLoading(true);
+
+    // fase 1: settings + decks em paralelo
+    const [s, existingDecks] = await Promise.all([getSettings(), getDecks()]);
     setSettings(s);
 
-    if (!s.onboardingDone) {
-      router.replace('/onboarding');
-      return;
-    }
-
     // seed built-in deck on first run
-    const existingDecks = await getDecks();
     if (!existingDecks.find((d) => d.id === DECK_1000.id)) {
       await saveDeck(DECK_1000);
       await saveCards(SENTENCES.map((sentence) => ({
@@ -68,10 +67,15 @@ export default function HomeScreen() {
       })));
     }
 
-    const allDecks = await getDecks();
+    // fase 2: decks, todos os cards e progresso em paralelo
+    const [allDecks, cards, allProgress] = await Promise.all([
+      getDecks(),
+      getCards(),
+      getAllProgress(),
+    ]);
+
     setDecks(allDecks);
 
-    const cards = await getCards();
     const manualCards = cards.filter((c) => c.deckId !== DECK_1000.id);
     setTotalCards(manualCards.length);
     const counts: Record<string, number> = {};
@@ -80,18 +84,29 @@ export default function HomeScreen() {
     }
     setCardsByDeck(counts);
 
-    const allProgress = await getAllProgress();
     const now = new Date();
     const toReview = allProgress.filter(
       (p) => p.nextReview && new Date(p.nextReview) <= now
     ).length;
-    setReviewCount(toReview);
-    setLearnedCount(allProgress.filter((p) => p.repetitions > 0).length);
+    const studiedIds = new Set(allProgress.map((p) => p.cardId));
+    const newUnseen = manualCards.filter((c) => !studiedIds.has(c.id)).length;
+    setReviewCount(toReview + newUnseen);
+
+    // builtin cards já estão em cards — sem chamada extra
+    const builtinIds = new Set(cards.filter((c) => c.deckId === DECK_1000.id).map((c) => c.id));
+    setLearnedCount(allProgress.filter((p) => p.repetitions > 0 && builtinIds.has(p.cardId)).length);
+    setLoading(false);
   }, []);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-  const startStudy = () => setShowGoalModal(true);
+  const startStudy = () => {
+    if (learnedCount > 0) {
+      router.push({ pathname: '/study/[deckId]', params: { deckId: DECK_1000.id } });
+    } else {
+      setShowGoalModal(true);
+    }
+  };
 
   const confirmGoal = async () => {
     await saveSettings({ dailyGoal: selectedGoal });
@@ -107,15 +122,30 @@ export default function HomeScreen() {
       description: newDeckDesc.trim(),
       color: newDeckColor,
     };
-    await saveDeck(deck);
-    setNewDeckName('');
-    setNewDeckDesc('');
-    setNewDeckColor(PRIMARY);
-    setShowNewDeckModal(false);
-    load();
+    try {
+      await saveDeck(deck);
+      setNewDeckName('');
+      setNewDeckDesc('');
+      setNewDeckColor(PRIMARY);
+      setShowNewDeckModal(false);
+      load();
+    } catch (e: any) {
+      Alert.alert('Erro ao criar deck', e.message ?? 'Tente novamente.');
+    }
   };
 
   const isToday = settings?.lastStudyDate === new Date().toDateString();
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 32 }}>🌱</Text>
+          <Text style={{ color: PRIMARY, fontWeight: '700', marginTop: 12, fontSize: 16 }}>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -134,8 +164,8 @@ export default function HomeScreen() {
         ) : (
           <TouchableOpacity style={styles.ctaCard} onPress={startStudy} activeOpacity={0.9}>
             <Text style={styles.ctaEmoji}>🌱</Text>
-            <Text style={styles.ctaTitle}>Comece agora!</Text>
-            <Text style={styles.ctaSub}>Suas primeiras frases estão esperando por você.</Text>
+            <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : 'Comece agora!'}</Text>
+            <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Suas primeiras frases estão esperando por você.'}</Text>
             <View style={styles.ctaBtn}>
               <Text style={styles.ctaBtnText}>Estudar agora</Text>
             </View>

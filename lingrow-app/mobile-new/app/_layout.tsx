@@ -1,8 +1,9 @@
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '@/context/auth';
+import { getSettings } from '@/store/lingrow';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -10,12 +11,24 @@ export const unstable_settings = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (!session) {
       router.replace('/login');
+      setChecked(true);
+      return;
     }
+    // verificar onboarding
+    getSettings(session.user.id).then((s) => {
+      if (!s.onboardingDone) {
+        router.replace('/onboarding');
+      } else {
+        router.replace('/(tabs)');
+      }
+      setChecked(true);
+    });
   }, [session, loading]);
 
   return (

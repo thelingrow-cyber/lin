@@ -1,6 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   StyleSheet,
   Text,
@@ -49,11 +50,13 @@ export default function StudyScreen() {
   const [flipped, setFlipped] = useState(false);
   const [done, setDone] = useState(false);
   const [studied, setStudied] = useState(0);
+  const [loading, setLoading] = useState(true);
   const flipAnim = useRef(new Animated.Value(0)).current;
   const swipeAnim = useRef(new Animated.Value(0)).current;
   const swipeBgAnim = useRef(new Animated.Value(0)).current;
 
   const loadSession = useCallback(async () => {
+    setLoading(true);
     const decks = await getDecks();
     const deck = decks.find((d) => d.id === deckId);
     if (deck) setDeckName(deck.name);
@@ -66,6 +69,7 @@ export default function StudyScreen() {
     flipAnim.setValue(0);
     swipeAnim.setValue(0);
     swipeBgAnim.setValue(0);
+    setLoading(false);
   }, [deckId]);
 
   useEffect(() => { void loadSession(); }, [loadSession]);
@@ -100,7 +104,12 @@ export default function StudyScreen() {
 
     const progress = await getProgress(current.id);
     const next = computeNextReview(progress, a);
-    await saveProgress(next);
+    try {
+      await saveProgress(next);
+    } catch (e: any) {
+      Alert.alert('Erro ao salvar progresso', e.message ?? 'Tente novamente.');
+      return;
+    }
 
     swipeAnim.setValue(0);
 
@@ -134,6 +143,17 @@ export default function StudyScreen() {
           <TouchableOpacity style={styles.doneSecondaryBtn} onPress={() => router.replace('/(tabs)')}>
             <Text style={styles.doneSecondaryText}>Voltar para o início</Text>
           </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.doneContainer}>
+          <Text style={styles.doneEmoji}>⏳</Text>
+          <Text style={styles.doneTitle}>Carregando...</Text>
         </View>
       </SafeAreaView>
     );
