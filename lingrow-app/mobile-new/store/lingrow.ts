@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { SENTENCES, DECK_1000 } from '@/data/sentences';
 
 export interface Card {
   id: string;
@@ -10,6 +11,22 @@ export interface Card {
   notes?: string;
   audioUrl?: string;
   position: number;
+}
+
+let _builtinCards: Card[] | null = null;
+function getBuiltinCards(): Card[] {
+  if (!_builtinCards) {
+    _builtinCards = SENTENCES.map((s) => ({
+      id: `card-builtin-${s.position}`,
+      deckId: DECK_1000.id,
+      front: s.front,
+      back: s.back,
+      keyword: s.keyword,
+      keywordPt: s.keywordPt,
+      position: s.position,
+    }));
+  }
+  return _builtinCards;
 }
 
 export interface Deck {
@@ -354,7 +371,8 @@ export function getIntervalLabel(answer: SRSAnswer, progress: CardProgress): str
 
 export async function getStudySession(deckId: string): Promise<Card[]> {
   const settings = await getSettings();
-  const cards = await getCards(deckId);
+  const isBuiltIn = deckId === DECK_1000.id;
+  const cards = isBuiltIn ? getBuiltinCards() : await getCards(deckId);
   const allProgress = await getAllProgress();
   const now = new Date();
 
@@ -373,7 +391,6 @@ export async function getStudySession(deckId: string): Promise<Card[]> {
     })
     .slice(0, MAX_REVIEWS_PER_DAY);
 
-  const isBuiltIn = deckId === 'deck-1000-frases';
   const studied = new Set(allProgress.map((p) => p.cardId));
   const newCards = cards
     .filter((c) => !studied.has(c.id))

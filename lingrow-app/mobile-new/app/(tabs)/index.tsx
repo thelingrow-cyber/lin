@@ -19,8 +19,6 @@ import {
   getAllProgress,
   getSettings,
   saveDeck,
-  saveCard,
-  saveCards,
   saveSettings,
   Deck,
   UserSettings,
@@ -48,54 +46,48 @@ export default function HomeScreen() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    try {
+      // fase 1: settings + decks + progresso em paralelo
+      const [s, allDecks, cards, allProgress] = await Promise.all([
+        getSettings(),
+        getDecks(),
+        getCards(),
+        getAllProgress(),
+      ]);
+      setSettings(s);
+      setDecks(allDecks);
 
-    // fase 1: settings + decks em paralelo
-    const [s, existingDecks] = await Promise.all([getSettings(), getDecks()]);
-    setSettings(s);
+      // cards manuais (não built-in)
+      const manualCards = cards.filter((c) => c.deckId !== DECK_1000.id);
+      setTotalCards(manualCards.length);
+      const counts: Record<string, number> = {};
+      for (const c of manualCards) {
+        counts[c.deckId] = (counts[c.deckId] ?? 0) + 1;
+      }
+      setCardsByDeck(counts);
 
-    // seed built-in deck on first run
-    if (!existingDecks.find((d) => d.id === DECK_1000.id)) {
-      await saveDeck(DECK_1000);
-      await saveCards(SENTENCES.map((sentence) => ({
-        id: `card-builtin-${sentence.position}`,
-        deckId: DECK_1000.id,
-        front: sentence.front,
-        back: sentence.back,
-        keyword: sentence.keyword,
-        keywordPt: sentence.keywordPt,
-        position: sentence.position,
-      })));
+      const now = new Date();
+      const studiedIds = new Set(allProgress.map((p) => p.cardId));
+
+      // reviews pendentes: built-in + manuais
+      const builtinCardIds = new Set(
+        SENTENCES.map((s) => `card-builtin-${s.position}`)
+      );
+      const toReview = allProgress.filter(
+        (p) => p.nextReview && new Date(p.nextReview) <= now
+      ).length;
+      const newUnseen = manualCards.filter((c) => !studiedIds.has(c.id)).length;
+      setReviewCount(toReview + newUnseen);
+
+      // frases built-in aprendidas (progress salvo no Supabase)
+      setLearnedCount(
+        allProgress.filter((p) => p.repetitions > 0 && builtinCardIds.has(p.cardId)).length
+      );
+    } catch {
+      // erro silencioso — tela renderiza vazia em vez de travar
+    } finally {
+      setLoading(false);
     }
-
-    // fase 2: decks, todos os cards e progresso em paralelo
-    const [allDecks, cards, allProgress] = await Promise.all([
-      getDecks(),
-      getCards(),
-      getAllProgress(),
-    ]);
-
-    setDecks(allDecks);
-
-    const manualCards = cards.filter((c) => c.deckId !== DECK_1000.id);
-    setTotalCards(manualCards.length);
-    const counts: Record<string, number> = {};
-    for (const c of manualCards) {
-      counts[c.deckId] = (counts[c.deckId] ?? 0) + 1;
-    }
-    setCardsByDeck(counts);
-
-    const now = new Date();
-    const toReview = allProgress.filter(
-      (p) => p.nextReview && new Date(p.nextReview) <= now
-    ).length;
-    const studiedIds = new Set(allProgress.map((p) => p.cardId));
-    const newUnseen = manualCards.filter((c) => !studiedIds.has(c.id)).length;
-    setReviewCount(toReview + newUnseen);
-
-    // builtin cards já estão em cards — sem chamada extra
-    const builtinIds = new Set(cards.filter((c) => c.deckId === DECK_1000.id).map((c) => c.id));
-    setLearnedCount(allProgress.filter((p) => p.repetitions > 0 && builtinIds.has(p.cardId)).length);
-    setLoading(false);
   }, []);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
@@ -109,7 +101,11 @@ export default function HomeScreen() {
   };
 
   const confirmGoal = async () => {
-    await saveSettings({ dailyGoal: selectedGoal });
+    try {
+      await saveSettings({ dailyGoal: selectedGoal });
+    } catch {
+      // falha ao salvar meta — continua com o padrão (5/dia)
+    }
     setShowGoalModal(false);
     router.push({ pathname: '/study/[deckId]', params: { deckId: DECK_1000.id } });
   };

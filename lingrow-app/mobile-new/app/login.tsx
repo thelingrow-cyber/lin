@@ -110,6 +110,13 @@ export default function LoginScreen() {
             {isSignUp ? 'Já tem conta? Entrar' : 'Não tem conta? Criar agora'}
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.privacyBtn}>
+          <Text style={styles.privacyText}>Ao continuar, você concorda com nossa </Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.notion.so/Pol-tica-de-Privacidade-Lingrow-2efa44f320bd4399a11610f0803f0e8d')}>
+            <Text style={styles.privacyLink}>Política de Privacidade</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -149,4 +156,7 @@ const styles = StyleSheet.create({
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   toggleBtn: { alignItems: 'center', marginTop: 4 },
   toggleText: { color: PRIMARY, fontWeight: '600', fontSize: 14 },
+  privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: 8 },
+  privacyText: { color: '#9CA3AF', fontSize: 12 },
+  privacyLink: { color: '#9CA3AF', fontSize: 12, textDecorationLine: 'underline' },
 });
