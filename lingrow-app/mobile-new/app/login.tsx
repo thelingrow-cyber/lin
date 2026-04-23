@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '@/lib/supabase';
 
 const PRIMARY = '#7C3AED';
@@ -42,6 +44,33 @@ export default function LoginScreen() {
     }
   };
 
+  const handleApple = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken!,
+      });
+      if (error) throw error;
+      if (credential.fullName?.givenName) {
+        await supabase.auth.updateUser({
+          data: {
+            full_name: `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim(),
+          },
+        });
+      }
+    } catch (e: any) {
+      if (e.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Erro', e.message);
+      }
+    }
+  };
+
   const handleGoogle = async () => {
     setLoading(true);
     try {
@@ -68,6 +97,16 @@ export default function LoginScreen() {
         <Text style={styles.logo}>🌱</Text>
         <Text style={styles.title}>Lingrow</Text>
         <Text style={styles.sub}>Aprenda inglês com flashcards inteligentes</Text>
+
+        {Platform.OS === 'ios' && (
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={14}
+            style={styles.appleBtn}
+            onPress={handleApple}
+          />
+        )}
 
         <TouchableOpacity style={styles.googleBtn} onPress={handleGoogle} disabled={loading}>
           <Text style={styles.googleBtnText}>G  Continuar com Google</Text>
@@ -128,6 +167,10 @@ const styles = StyleSheet.create({
   logo: { fontSize: 64, textAlign: 'center' },
   title: { fontSize: 32, fontWeight: '800', color: PRIMARY, textAlign: 'center' },
   sub: { fontSize: 15, color: '#6B7280', textAlign: 'center', marginBottom: 8 },
+  appleBtn: {
+    height: 52,
+    borderRadius: 14,
+  },
   googleBtn: {
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
