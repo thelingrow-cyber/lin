@@ -16,6 +16,24 @@ import { supabase } from '@/lib/supabase';
 
 const PRIMARY = '#7C3AED';
 
+function translateAuthError(msg: string): string {
+  if (!msg) return 'Ocorreu um erro. Tente novamente.';
+  const m = msg.toLowerCase();
+  if (m.includes('user already registered') || m.includes('already registered'))
+    return 'Este email já está cadastrado. Tente entrar com sua senha.';
+  if (m.includes('invalid login credentials') || m.includes('invalid credentials'))
+    return 'Email ou senha incorretos.';
+  if (m.includes('email not confirmed'))
+    return 'Confirme seu email antes de entrar. Verifique sua caixa de entrada.';
+  if (m.includes('password should be at least'))
+    return 'A senha deve ter pelo menos 6 caracteres.';
+  if (m.includes('unable to validate email address'))
+    return 'Email inválido. Verifique e tente novamente.';
+  if (m.includes('network') || m.includes('fetch'))
+    return 'Sem conexão com a internet. Verifique sua rede.';
+  return 'Ocorreu um erro. Tente novamente.';
+}
+
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +56,7 @@ export default function LoginScreen() {
         if (error) throw error;
       }
     } catch (e: any) {
-      Alert.alert('Erro', e.message);
+      Alert.alert('Erro', translateAuthError(e.message));
     } finally {
       setLoading(false);
     }
@@ -66,7 +84,7 @@ export default function LoginScreen() {
       }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Erro', e.message);
+        Alert.alert('Erro', translateAuthError(e.message));
       }
     }
   };
@@ -85,7 +103,7 @@ export default function LoginScreen() {
         await Linking.openURL(data.url);
       }
     } catch (e: any) {
-      Alert.alert('Erro', e.message);
+      Alert.alert('Erro', translateAuthError(e.message));
     } finally {
       setLoading(false);
     }
