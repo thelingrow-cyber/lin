@@ -124,6 +124,7 @@ export default function HomeScreen() {
     };
     try {
       await saveDeck(deck);
+      Analytics.deckCreated(deck.name);
       setNewDeckName('');
       setNewDeckDesc('');
       setNewDeckColor(PRIMARY);
