@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --dark:#0F0A1E; --purple:#7C3AED; --purple-light:#A78BFA; --lilac:#F0ABFC; --white:#FAFAFA; }
+    html, body { width:1080px; height:1080px; overflow:hidden; }
+    body { font-family:'Inter',sans-serif; background:var(--dark); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; padding:80px; text-align:center; }
+    .orb { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    .o1 { width:500px;height:500px;background:rgba(124,58,237,0.25);top:-100px;right:-80px; }
+    .o2 { width:400px;height:400px;background:rgba(240,171,252,0.12);bottom:-80px;left:-80px; }
+    .o3 { width:350px;height:350px;background:rgba(167,139,250,0.15);top:50%;left:50%;transform:translate(-50%,-50%); }
+    .grid { position:absolute;inset:0;background-image:linear-gradient(rgba(124,58,237,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.05) 1px,transparent 1px);background-size:60px 60px; }
+    .border { position:absolute;inset:0;border:1.5px solid rgba(124,58,237,0.3); }
+    .border::after { content:'';position:absolute;inset:-1px;background:linear-gradient(135deg,rgba(124,58,237,0.8) 0%,transparent 35%,transparent 65%,rgba(240,171,252,0.5) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:1.5px; }
+    .content { position:relative;z-index:5;width:100%;display:flex;flex-direction:column;align-items:center; }
+    .save-label { font-size:16px;color:var(--purple-light);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;font-weight:500; }
+    .headline { font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:82px;line-height:1.0;letter-spacing:-2px;margin-bottom:52px; }
+    .hw { color:var(--white); } .ha { color:var(--lilac); }
+    .divrow { display:flex;align-items:center;gap:16px;width:100%;margin-bottom:44px; }
+    .dline { flex:1;height:1px;background:rgba(124,58,237,0.3); }
+    .ddot { width:8px;height:8px;border-radius:50%;background:var(--purple); }
+    .cbox { background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:20px;padding:28px 44px;margin-bottom:40px;width:100%; }
+    .cq { font-size:26px;color:var(--purple-light);margin-bottom:10px; }
+    .ca { font-size:26px;color:var(--white);font-weight:500; }
+    .btn { display:inline-flex;align-items:center;gap:14px;background:var(--purple);color:var(--white);font-weight:600;font-size:22px;padding:24px 56px;border-radius:999px;box-shadow:0 0 60px rgba(124,58,237,0.5),0 0 120px rgba(124,58,237,0.2); }
+    .slide-num { position:absolute;top:44px;left:64px;font-size:13px;color:var(--purple-light);opacity:0.5;letter-spacing:2px;z-index:10; }
+    .logo { position:absolute;bottom:44px;right:64px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;color:var(--white);opacity:0.45;z-index:10; }
+    .logo span { color:var(--purple-light);opacity:1; }
+  </style>
+</head>
+<body>
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="grid"></div><div class="border"></div>
+  <div class="content">
+    <div class="save-label">não perde</div>
+    <div class="headline">
+      <div class="hw">Salva esse post</div>
+      <div class="ha">antes de esquecer.</div>
+    </div>
+    <div class="divrow"><div class="dline"></div><div class="ddot"></div><div class="ddot"></div><div class="ddot"></div><div class="dline"></div></div>
+    <div class="cbox">
+      <div class="cq">Qual te pegou mais?</div>
+      <div class="ca">Me conta nos comentários 👇</div>
+    </div>
+    <div class="btn">Baixe o Lingrow — link na bio →</div>
+  </div>
+  <div class="slide-num">09 / 09</div>
+  <div class="logo">Ling<span>row</span></div>
+</body>
+</html>
