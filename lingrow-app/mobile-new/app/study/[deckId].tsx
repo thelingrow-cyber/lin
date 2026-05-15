@@ -24,7 +24,7 @@ import {
   SRSAnswer,
 } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
-import { requestNotificationPermission, scheduleNextReviewNotification } from '@/lib/notifications';
+import { requestNotificationPermission, scheduleNextReviewNotification, hasNotificationPermission } from '@/lib/notifications';
 
 const PRIMARY = '#7C3AED';
 
@@ -190,8 +190,12 @@ export default function StudyScreen() {
     <SafeAreaView style={styles.safe}>
       {/* header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {
-          if (!done && index > 0) Analytics.reviewSessionAbandoned(deckId, index, total);
+        <TouchableOpacity onPress={async () => {
+          if (!done && index > 0) {
+            Analytics.reviewSessionAbandoned(deckId, index, total);
+            const permitted = await hasNotificationPermission();
+            if (permitted) void scheduleNextReviewNotification();
+          }
           router.back();
         }}>
           <Ionicons name="arrow-back" size={22} color="#6B7280" />

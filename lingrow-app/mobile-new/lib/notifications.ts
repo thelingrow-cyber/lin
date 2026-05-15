@@ -16,6 +16,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return status === 'granted';
 }
 
+export async function hasNotificationPermission(): Promise<boolean> {
+  const { status } = await Notifications.getPermissionsAsync();
+  return status === 'granted';
+}
+
 export async function scheduleNextReviewNotification(): Promise<void> {
   try {
     const allProgress = await getAllProgress();
