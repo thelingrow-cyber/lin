@@ -2,8 +2,10 @@ import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { PostHogProvider } from 'posthog-react-native';
 import { AuthProvider, useAuth } from '@/context/auth';
 import { getSettings } from '@/store/lingrow';
+import { posthog } from '@/lib/analytics';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -48,8 +50,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootNavigator />
-    </AuthProvider>
+    <PostHogProvider client={posthog}>
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
+    </PostHogProvider>
   );
 }

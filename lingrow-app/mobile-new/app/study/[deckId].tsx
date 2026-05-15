@@ -23,6 +23,7 @@ import {
   updateStreak,
   SRSAnswer,
 } from '@/store/lingrow';
+import { Analytics } from '@/lib/analytics';
 
 const PRIMARY = '#7C3AED';
 
@@ -66,6 +67,9 @@ export default function StudyScreen() {
     setFlipped(false);
     setDone(false);
     setStudied(0);
+    if (session.length > 0) {
+      Analytics.reviewSessionStarted(deckId, deck?.name ?? '', session.length);
+    }
     flipAnim.setValue(0);
     swipeAnim.setValue(0);
     swipeBgAnim.setValue(0);
@@ -113,11 +117,14 @@ export default function StudyScreen() {
 
     swipeAnim.setValue(0);
 
+    Analytics.cardReviewed(deckId, a, index);
+
     const nextIndex = index + 1;
     if (nextIndex >= total) {
       await updateStreak();
       setStudied(total);
       setDone(true);
+      Analytics.reviewSessionCompleted(deckId, deckName, total);
     } else {
       setIndex(nextIndex);
       setFlipped(false);
@@ -180,7 +187,10 @@ export default function StudyScreen() {
     <SafeAreaView style={styles.safe}>
       {/* header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => {
+          if (!done && index > 0) Analytics.reviewSessionAbandoned(deckId, index, total);
+          router.back();
+        }}>
           <Ionicons name="arrow-back" size={22} color="#6B7280" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>

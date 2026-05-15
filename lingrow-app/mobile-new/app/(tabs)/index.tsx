@@ -24,6 +24,7 @@ import {
   UserSettings,
 } from '@/store/lingrow';
 import { DECK_1000, SENTENCES } from '@/data/sentences';
+import { Analytics } from '@/lib/analytics';
 
 const PRIMARY = '#7C3AED';
 
@@ -90,7 +91,10 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { void load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    Analytics.sessionStarted();
+    void load();
+  }, [load]));
 
   const startStudy = () => {
     if (learnedCount > 0) {
