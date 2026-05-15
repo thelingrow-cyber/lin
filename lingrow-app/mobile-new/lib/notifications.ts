@@ -21,19 +21,35 @@ export async function hasNotificationPermission(): Promise<boolean> {
   return status === 'granted';
 }
 
+const MIN_DELAY_MS = 60 * 60 * 1000;      // 1 hora mínima
+const OVERDUE_DELAY_MS = 3 * 60 * 60 * 1000; // 3 horas se já vencido
+
 export async function scheduleNextReviewNotification(): Promise<void> {
   try {
     const allProgress = await getAllProgress();
     const now = new Date();
+
+    const hasDue = allProgress.some(
+      (p) => p.nextReview && new Date(p.nextReview) <= now
+    );
 
     const futureReviews = allProgress
       .filter((p) => p.nextReview && new Date(p.nextReview) > now)
       .map((p) => new Date(p.nextReview!).getTime())
       .sort((a, b) => a - b);
 
-    if (futureReviews.length === 0) return;
+    let notifyAt: Date;
 
-    const nextReviewTime = new Date(futureReviews[0]);
+    if (hasDue) {
+      // cards já vencidos — avisa em 3 horas
+      notifyAt = new Date(now.getTime() + OVERDUE_DELAY_MS);
+    } else if (futureReviews.length > 0 && futureReviews[0] - now.getTime() > MIN_DELAY_MS) {
+      // próximo card com mais de 1 hora à frente
+      notifyAt = new Date(futureReviews[0]);
+    } else {
+      // nada relevante para notificar
+      return;
+    }
 
     await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -45,7 +61,7 @@ export async function scheduleNextReviewNotification(): Promise<void> {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: nextReviewTime,
+        date: notifyAt,
       },
     });
   } catch {
