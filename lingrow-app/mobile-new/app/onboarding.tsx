@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { saveSettings } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +58,7 @@ export default function OnboardingScreen() {
       // mesmo com erro, prossegue — usuário não deve ficar preso no onboarding
     }
     Analytics.onboardingCompleted();
+    await requestNotificationPermission();
     router.replace('/(tabs)');
   };
 

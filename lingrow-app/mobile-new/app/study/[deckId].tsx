@@ -24,6 +24,7 @@ import {
   SRSAnswer,
 } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
+import { scheduleNextReviewNotification } from '@/lib/notifications';
 
 const PRIMARY = '#7C3AED';
 
@@ -125,6 +126,7 @@ export default function StudyScreen() {
       setStudied(total);
       setDone(true);
       Analytics.reviewSessionCompleted(deckId, deckName, total);
+      void scheduleNextReviewNotification();
     } else {
       setIndex(nextIndex);
       setFlipped(false);
