@@ -70,6 +70,8 @@ export default function StudyScreen() {
     setStudied(0);
     if (session.length > 0) {
       Analytics.reviewSessionStarted(deckId, deck?.name ?? '', session.length);
+      const { cancelAllScheduledNotificationsAsync } = await import('expo-notifications');
+      void cancelAllScheduledNotificationsAsync();
     }
     flipAnim.setValue(0);
     swipeAnim.setValue(0);
