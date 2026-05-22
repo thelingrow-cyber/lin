@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Linking } from 'react-native';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { posthog } from '@/lib/analytics';
@@ -38,7 +39,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    const handleOAuthURL = async (url: string) => {
+      const fragment = url.split('#')[1];
+      if (!fragment) return;
+      const params = new URLSearchParams(fragment);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      if (access_token && refresh_token) {
+        await supabase.auth.setSession({ access_token, refresh_token });
+      }
+    };
+
+    Linking.getInitialURL().then((url) => {
+      if (url) void handleOAuthURL(url);
+    });
+
+    const linkingSub = Linking.addEventListener('url', ({ url }) => {
+      void handleOAuthURL(url);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      linkingSub.remove();
+    };
   }, []);
 
   const signOut = async () => {

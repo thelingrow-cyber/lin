@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 
 const PRIMARY = '#7C3AED';
 const PRIVACY_URL = 'https://www.notion.so/Pol-tica-de-Privacidade-Lingrow-2efa44f320bd4399a11610f0803f0e8d';
+const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20';
 
 export default function ConfigScreen() {
   const { signOut } = useAuth();
@@ -41,7 +42,12 @@ export default function ConfigScreen() {
               if (!session?.user?.id) throw new Error('Usuário não autenticado');
               const userId = session.user.id;
 
-              // apaga dados do usuário
+              // apaga todos os dados do usuário
+              const { data: userDecks } = await supabase.from('decks').select('id').eq('user_id', userId);
+              if (userDecks && userDecks.length > 0) {
+                const deckIds = userDecks.map((d: any) => d.id);
+                await supabase.from('cards').delete().in('deck_id', deckIds);
+              }
               await supabase.from('card_progress').delete().eq('user_id', userId);
               await supabase.from('decks').delete().eq('user_id', userId);
               await supabase.from('user_settings').delete().eq('user_id', userId);
@@ -67,6 +73,12 @@ export default function ConfigScreen() {
           <Text style={styles.cardTitle}>Áudio e Pronúncia</Text>
           <Text style={styles.cardSub}>O áudio utiliza pronúncia em inglês americano (EN-US) com velocidade padrão.</Text>
         </View>
+
+        <TouchableOpacity style={styles.feedbackBtn} onPress={() => Linking.openURL(FEEDBACK_URL)}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#10B981" />
+          <Text style={styles.feedbackText}>Enviar feedback</Text>
+          <Ionicons name="open-outline" size={16} color="#9CA3AF" />
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkBtn} onPress={() => Linking.openURL(PRIVACY_URL)}>
           <Ionicons name="shield-checkmark-outline" size={20} color={PRIMARY} />
@@ -95,6 +107,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   cardSub: { fontSize: 13, color: '#6B7280' },
+  feedbackBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F0FDF4', borderRadius: 16, padding: 18 },
+  feedbackText: { flex: 1, fontSize: 16, fontWeight: '600', color: '#10B981' },
   linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F5F3FF', borderRadius: 16, padding: 18 },
   linkText: { flex: 1, fontSize: 16, fontWeight: '600', color: PRIMARY },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FEF2F2', borderRadius: 16, padding: 18 },

@@ -1,4 +1,4 @@
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -18,7 +18,6 @@ import {
   getDecks,
   getProgress,
   getStudySession,
-  getIntervalLabel,
   saveProgress,
   updateStreak,
   SRSAnswer,
@@ -193,8 +192,8 @@ export default function StudyScreen() {
       {/* header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={async () => {
-          if (!done && index > 0) {
-            Analytics.reviewSessionAbandoned(deckId, index, total);
+          if (!done && cards.length > 0) {
+            if (index > 0) Analytics.reviewSessionAbandoned(deckId, index, total);
             const permitted = await hasNotificationPermission();
             if (permitted) void scheduleNextReviewNotification();
           }

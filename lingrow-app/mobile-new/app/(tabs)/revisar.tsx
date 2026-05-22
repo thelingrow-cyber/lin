@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getDecks, getCards, getAllProgress, Deck } from '@/store/lingrow';
+import { SENTENCES, DECK_1000 } from '@/data/sentences';
 
 const PRIMARY = '#7C3AED';
 
@@ -28,14 +29,27 @@ export default function RevisarScreen() {
     let total = 0;
 
     const studiedIds = new Set(allProgress.map((p) => p.cardId));
+    const builtinCardIds = new Set(SENTENCES.map((s) => `card-builtin-${s.position}`));
+
     for (const deck of allDecks) {
-      const isBuiltIn = deck.id === 'deck-1000-frases';
-      const cards = allCards.filter((c) => c.deckId === deck.id);
-      const cardIds = new Set(cards.map((c) => c.id));
-      const due = allProgress.filter(
-        (p) => cardIds.has(p.cardId) && p.nextReview && new Date(p.nextReview) <= now
-      ).length;
-      const newUnseen = isBuiltIn ? 0 : cards.filter((c) => !studiedIds.has(c.id)).length;
+      const isBuiltIn = deck.id === DECK_1000.id;
+      let due: number;
+      let newUnseen: number;
+
+      if (isBuiltIn) {
+        due = allProgress.filter(
+          (p) => builtinCardIds.has(p.cardId) && p.nextReview && new Date(p.nextReview) <= now
+        ).length;
+        newUnseen = 0;
+      } else {
+        const cards = allCards.filter((c) => c.deckId === deck.id);
+        const cardIds = new Set(cards.map((c) => c.id));
+        due = allProgress.filter(
+          (p) => cardIds.has(p.cardId) && p.nextReview && new Date(p.nextReview) <= now
+        ).length;
+        newUnseen = cards.filter((c) => !studiedIds.has(c.id)).length;
+      }
+
       const count = due + newUnseen;
       counts[deck.id] = count;
       total += count;

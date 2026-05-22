@@ -1,7 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -27,6 +29,8 @@ import { DECK_1000, SENTENCES } from '@/data/sentences';
 import { Analytics } from '@/lib/analytics';
 
 const PRIMARY = '#7C3AED';
+const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20';
+const BETA_WELCOME_KEY = 'beta_welcome_done';
 
 export default function HomeScreen() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -36,6 +40,7 @@ export default function HomeScreen() {
   const [reviewCount, setReviewCount] = useState(0);
   const [learnedCount, setLearnedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showBetaWelcome, setShowBetaWelcome] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
@@ -45,9 +50,17 @@ export default function HomeScreen() {
 
   const DECK_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
 
+  const dismissBetaWelcome = useCallback(async () => {
+    await AsyncStorage.setItem(BETA_WELCOME_KEY, 'true');
+    setShowBetaWelcome(false);
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const betaDone = await AsyncStorage.getItem(BETA_WELCOME_KEY);
+      if (!betaDone) setShowBetaWelcome(true);
+
       // fase 1: settings + decks + progresso em paralelo
       const [s, allDecks, cards, allProgress] = await Promise.all([
         getSettings(),
@@ -129,7 +142,7 @@ export default function HomeScreen() {
       setNewDeckDesc('');
       setNewDeckColor(PRIMARY);
       setShowNewDeckModal(false);
-      load();
+      void load();
     } catch (e: any) {
       Alert.alert('Erro ao criar deck', e.message ?? 'Tente novamente.');
     }
@@ -244,6 +257,27 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Beta welcome modal */}
+      <Modal visible={showBetaWelcome} transparent animationType="fade">
+        <View style={styles.betaOverlay}>
+          <View style={styles.betaBox}>
+            <View style={styles.betaBody}>
+              <Text style={styles.betaEmoji}>🌱</Text>
+              <Text style={styles.betaTitle}>Você chegou primeiro.</Text>
+              <Text style={styles.betaText}>
+                O Lingrow ainda está crescendo — e você está aqui desde o início.
+              </Text>
+              <Text style={styles.betaText}>
+                Tem uma ideia ou quer contar como está sendo? Nos passe seu feedback — você vai moldar conosco tudo que está vindo.
+              </Text>
+              <TouchableOpacity style={styles.betaCloseBtn} onPress={dismissBetaWelcome}>
+                <Text style={styles.betaCloseText}>Vamos lá!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Goal modal */}
       <Modal visible={showGoalModal} transparent animationType="slide">
@@ -377,6 +411,17 @@ const styles = StyleSheet.create({
   deckItemCountLabel: { fontSize: 13, color: '#9CA3AF' },
   deckItemCountVal: { fontSize: 13, fontWeight: '700' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  betaOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  betaBox: { backgroundColor: '#fff', borderRadius: 24, overflow: 'hidden', width: '100%', maxWidth: 360 },
+  betaHeader: { backgroundColor: PRIMARY, alignItems: 'center', paddingVertical: 28 },
+  betaEmoji: { fontSize: 52 },
+  betaBody: { padding: 24, gap: 14 },
+  betaTitle: { fontSize: 22, fontWeight: '800', color: '#111827', textAlign: 'center' },
+  betaText: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  betaFeedbackBtn: { borderWidth: 1.5, borderColor: PRIMARY, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  betaFeedbackText: { color: PRIMARY, fontWeight: '700', fontSize: 15 },
+  betaCloseBtn: { backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  betaCloseText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   modalIcon: { fontSize: 40, textAlign: 'center' },
