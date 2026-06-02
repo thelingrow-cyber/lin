@@ -31,7 +31,11 @@ export default function RevisarScreen() {
     const studiedIds = new Set(allProgress.map((p) => p.cardId));
     const builtinCardIds = new Set(SENTENCES.map((s) => `card-builtin-${s.position}`));
 
-    for (const deck of allDecks) {
+    // inclui o deck built-in (1000 frases) na lista — contagem isolada por card,
+    // sem misturar com os decks criados pelo usuário
+    const decksWithBuiltin: Deck[] = [DECK_1000 as Deck, ...allDecks];
+
+    for (const deck of decksWithBuiltin) {
       const isBuiltIn = deck.id === DECK_1000.id;
       let due: number;
       let newUnseen: number;
@@ -55,7 +59,7 @@ export default function RevisarScreen() {
       total += count;
     }
 
-    setDecks(allDecks);
+    setDecks(decksWithBuiltin);
     setReviewByDeck(counts);
     setTotalReview(total);
     } catch (e: any) {

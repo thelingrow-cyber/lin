@@ -167,8 +167,8 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Bem-vindo ao Lingrow</Text>
         <Text style={styles.headerSub}>Aprenda inglês com flashcards inteligentes</Text>
 
-        {/* streak or CTA */}
-        {isToday ? (
+        {/* streak (só quando nada vencido) ou CTA para estudar */}
+        {isToday && reviewCount === 0 ? (
           <View style={styles.streakCard}>
             <Text style={styles.streakEmoji}>🎉</Text>
             <Text style={styles.streakTitle}>Você está em dia hoje!</Text>
