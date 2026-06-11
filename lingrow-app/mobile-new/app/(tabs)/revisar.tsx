@@ -6,8 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { getDecks, getCards, getAllProgress, Deck } from '@/store/lingrow';
 import { SENTENCES, DECK_1000 } from '@/data/sentences';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 
 export default function RevisarScreen() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -75,8 +76,8 @@ export default function RevisarScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 32 }}>📚</Text>
-          <Text style={{ color: PRIMARY, fontWeight: '700', marginTop: 12, fontSize: 16 }}>Carregando...</Text>
+          <Ionicons name="book" size={36} color={PRIMARY} />
+          <Text style={{ color: PRIMARY, fontFamily: fonts.bold, marginTop: 12, fontSize: 16 }}>Carregando...</Text>
         </View>
       </SafeAreaView>
     );
@@ -90,7 +91,9 @@ export default function RevisarScreen() {
 
         {totalReview === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyEmoji}>🎉</Text>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="checkmark-done" size={30} color={colors.success} />
+            </View>
             <Text style={styles.emptyTitle}>Tudo em dia!</Text>
             <Text style={styles.emptySub}>Você não tem cards para revisar agora. Continue estudando para criar novas revisões.</Text>
           </View>
@@ -131,20 +134,20 @@ export default function RevisarScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 12, paddingBottom: 32 },
-  title: { fontSize: 28, fontWeight: '800', color: '#111827' },
-  sub: { fontSize: 15, color: '#6B7280' },
-  emptyCard: { backgroundColor: '#fff', borderRadius: 16, padding: 32, alignItems: 'center', gap: 8, marginTop: 16 },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  emptySub: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  title: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text },
+  sub: { fontSize: 15, color: colors.textMuted },
+  emptyCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 32, alignItems: 'center', gap: 8, marginTop: 16 },
+  emptyIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 20, fontFamily: fonts.bold, color: colors.text },
+  emptySub: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
   totalBadge: { backgroundColor: PRIMARY + '15', borderRadius: 12, padding: 12, alignItems: 'center' },
-  totalText: { color: PRIMARY, fontWeight: '700', fontSize: 15 },
-  deckCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  totalText: { color: PRIMARY, fontFamily: fonts.bold, fontSize: 15 },
+  deckCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   deckIcon: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  deckName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  deckCount: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  deckName: { fontSize: 15, fontFamily: fonts.bold, color: colors.text },
+  deckCount: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   badge: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  badgeText: { color: colors.surface, fontFamily: fonts.extrabold, fontSize: 16 },
 });

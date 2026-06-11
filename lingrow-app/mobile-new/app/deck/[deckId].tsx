@@ -5,8 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getDecks, getCards, getAllProgress, getSettings, getStudySession, Deck } from '@/store/lingrow';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 
 export default function DeckScreen() {
   const { deckId } = useLocalSearchParams<{ deckId: string }>();
@@ -80,20 +81,20 @@ export default function DeckScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 12, paddingBottom: 40 },
   backBtn: { marginBottom: 4 },
-  title: { fontSize: 26, fontWeight: '800', color: PRIMARY },
-  sub: { fontSize: 14, color: '#6B7280' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, gap: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  title: { fontSize: 26, fontFamily: fonts.extrabold, color: PRIMARY },
+  sub: { fontSize: 14, color: colors.textMuted },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, gap: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressLabel: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  progressPct: { fontSize: 16, fontWeight: '700', color: PRIMARY },
-  progressBarBg: { height: 6, backgroundColor: '#E5E7EB', borderRadius: 3 },
+  progressLabel: { fontSize: 16, fontFamily: fonts.bold, color: colors.text },
+  progressPct: { fontSize: 16, fontFamily: fonts.bold, color: PRIMARY },
+  progressBarBg: { height: 6, backgroundColor: colors.border, borderRadius: 3 },
   progressBarFill: { height: 6, backgroundColor: PRIMARY, borderRadius: 3 },
-  progressCount: { fontSize: 13, color: '#6B7280' },
-  deckName: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  deckInfo: { fontSize: 13, color: '#6B7280' },
+  progressCount: { fontSize: 13, color: colors.textMuted },
+  deckName: { fontSize: 16, fontFamily: fonts.bold, color: colors.text },
+  deckInfo: { fontSize: 13, color: colors.textMuted },
   studyBtn: { backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  studyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  studyBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 15 },
 });

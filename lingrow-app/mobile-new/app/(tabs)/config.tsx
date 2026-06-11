@@ -5,8 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/auth';
 import { supabase } from '@/lib/supabase';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 const PRIVACY_URL = 'https://www.notion.so/Pol-tica-de-Privacidade-Lingrow-2efa44f320bd4399a11610f0803f0e8d';
 const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20';
 
@@ -75,24 +76,24 @@ export default function ConfigScreen() {
         </View>
 
         <TouchableOpacity style={styles.feedbackBtn} onPress={() => Linking.openURL(FEEDBACK_URL)}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#10B981" />
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.success} />
           <Text style={styles.feedbackText}>Enviar feedback</Text>
-          <Ionicons name="open-outline" size={16} color="#9CA3AF" />
+          <Ionicons name="open-outline" size={16} color={colors.textFaint} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkBtn} onPress={() => Linking.openURL(PRIVACY_URL)}>
           <Ionicons name="shield-checkmark-outline" size={20} color={PRIMARY} />
           <Text style={styles.linkText}>Política de Privacidade</Text>
-          <Ionicons name="open-outline" size={16} color="#9CA3AF" />
+          <Ionicons name="open-outline" size={16} color={colors.textFaint} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-          <Ionicons name="trash-outline" size={20} color="#9CA3AF" />
+          <Ionicons name="trash-outline" size={20} color={colors.textFaint} />
           <Text style={styles.deleteText}>Excluir minha conta</Text>
         </TouchableOpacity>
       </View>
@@ -101,18 +102,18 @@ export default function ConfigScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, padding: 20, gap: 16 },
-  title: { fontSize: 26, fontWeight: '800', color: PRIMARY },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  cardSub: { fontSize: 13, color: '#6B7280' },
-  feedbackBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F0FDF4', borderRadius: 16, padding: 18 },
-  feedbackText: { flex: 1, fontSize: 16, fontWeight: '600', color: '#10B981' },
-  linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F5F3FF', borderRadius: 16, padding: 18 },
-  linkText: { flex: 1, fontSize: 16, fontWeight: '600', color: PRIMARY },
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FEF2F2', borderRadius: 16, padding: 18 },
-  logoutText: { fontSize: 16, fontWeight: '700', color: '#EF4444' },
+  title: { fontSize: 26, fontFamily: fonts.extrabold, color: PRIMARY },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  cardTitle: { fontSize: 16, fontFamily: fonts.bold, color: colors.text },
+  cardSub: { fontSize: 13, color: colors.textMuted },
+  feedbackBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.successSoft, borderRadius: 16, padding: 18 },
+  feedbackText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: colors.success },
+  linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.primarySoft, borderRadius: 16, padding: 18 },
+  linkText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: PRIMARY },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.dangerSoft, borderRadius: 16, padding: 18 },
+  logoutText: { fontSize: 16, fontFamily: fonts.bold, color: colors.danger },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 18 },
-  deleteText: { fontSize: 15, fontWeight: '600', color: '#9CA3AF' },
+  deleteText: { fontSize: 15, fontFamily: fonts.semibold, color: colors.textFaint },
 });

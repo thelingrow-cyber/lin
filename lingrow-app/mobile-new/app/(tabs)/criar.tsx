@@ -2,6 +2,8 @@ import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,8 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { getDecks, saveCard, Deck } from '@/store/lingrow';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 
 export default function CriarScreen() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -68,6 +71,10 @@ export default function CriarScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={PRIMARY} />
@@ -81,7 +88,7 @@ export default function CriarScreen() {
           <TouchableOpacity style={styles.picker} onPress={() => setShowDeckPicker(!showDeckPicker)}>
             <View style={[styles.pickerDot, { backgroundColor: selectedDeck?.color ?? PRIMARY }]} />
             <Text style={styles.pickerText}>{selectedDeck?.name ?? 'Selecione um deck'}</Text>
-            <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+            <Ionicons name="chevron-down" size={18} color={colors.textFaint} />
           </TouchableOpacity>
 
           {showDeckPicker && (
@@ -109,7 +116,7 @@ export default function CriarScreen() {
             multiline
             numberOfLines={3}
             maxLength={200}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textFaint}
           />
 
           {/* back */}
@@ -122,7 +129,7 @@ export default function CriarScreen() {
             multiline
             numberOfLines={3}
             maxLength={200}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textFaint}
           />
 
           {/* notes */}
@@ -135,7 +142,7 @@ export default function CriarScreen() {
             multiline
             numberOfLines={3}
             maxLength={300}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textFaint}
           />
 
           <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={save} disabled={saving}>
@@ -143,25 +150,26 @@ export default function CriarScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 12, paddingBottom: 40 },
   backBtn: { marginBottom: 4 },
-  title: { fontSize: 26, fontWeight: '800', color: PRIMARY },
-  sub: { fontSize: 14, color: '#6B7280' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  label: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  picker: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, gap: 8 },
+  title: { fontSize: 26, fontFamily: fonts.extrabold, color: PRIMARY },
+  sub: { fontSize: 14, color: colors.textMuted },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  label: { fontSize: 14, fontFamily: fonts.semibold, color: colors.text },
+  picker: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, padding: 12, gap: 8 },
   pickerDot: { width: 12, height: 12, borderRadius: 6 },
-  pickerText: { flex: 1, fontSize: 15, color: '#111827' },
-  dropdownList: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, overflow: 'hidden', marginTop: -4 },
-  dropdownItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  dropdownItemText: { fontSize: 15, color: '#111827' },
-  textarea: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 15, color: '#111827', textAlignVertical: 'top', minHeight: 80 },
+  pickerText: { flex: 1, fontSize: 15, color: colors.text },
+  dropdownList: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', marginTop: -4 },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  dropdownItemText: { fontSize: 15, color: colors.text },
+  textarea: { borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, padding: 12, fontSize: 15, color: colors.text, textAlignVertical: 'top', minHeight: 80 },
   saveBtn: { backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  saveBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 16 },
 });

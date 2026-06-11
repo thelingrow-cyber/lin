@@ -9,25 +9,33 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { saveSettings } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
+import { colors, fonts } from '@/theme';
 
 const { width } = Dimensions.get('window');
 
 const SLIDES = [
   {
-    icon: '🌱',
+    icon: 'leaf' as const,
+    iconColor: colors.primary,
+    iconBg: colors.primarySoft,
     title: 'Bem-vindo ao Lingrow',
     subtitle: 'Aprenda inglês com frases reais do dia a dia, do jeito certo.',
   },
   {
-    icon: '🧠',
+    icon: 'bulb' as const,
+    iconColor: colors.info,
+    iconBg: colors.infoSoft,
     title: 'Revisão inteligente',
     subtitle:
       'O app lembra quando você precisa revisar cada frase. Estude poucos minutos por dia e evolua de verdade.',
   },
   {
-    icon: '🔥',
+    icon: 'flame' as const,
+    iconColor: colors.accent,
+    iconBg: colors.accentSoft,
     title: 'Constância é tudo',
     subtitle:
       'Estude todos os dias e veja seu inglês crescer. Comece agora com suas primeiras frases.',
@@ -73,7 +81,9 @@ export default function OnboardingScreen() {
         keyExtractor={(_, i) => String(i)}
         renderItem={({ item }) => (
           <View style={styles.slide}>
-            <Text style={styles.icon}>{item.icon}</Text>
+            <View style={[styles.iconWrap, { backgroundColor: item.iconBg }]}>
+              <Ionicons name={item.icon} size={52} color={item.iconColor} />
+            </View>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.subtitle}>{item.subtitle}</Text>
           </View>
@@ -97,7 +107,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -108,20 +118,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     gap: 16,
   },
-  icon: { fontSize: 72, marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', lineHeight: 24 },
+  iconWrap: { width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  title: { fontSize: 28, fontFamily: fonts.bold, color: colors.text, textAlign: 'center' },
+  subtitle: { fontSize: 16, color: colors.textMuted, textAlign: 'center', lineHeight: 24 },
   dots: { flexDirection: 'row', gap: 8, marginVertical: 32 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E5E7EB' },
-  dotActive: { width: 24, backgroundColor: '#7C3AED' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  dotActive: { width: 24, backgroundColor: colors.primary },
   btn: {
     marginHorizontal: 24,
     marginBottom: 16,
     width: width - 48,
     paddingVertical: 16,
     borderRadius: 16,
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.primary,
     alignItems: 'center',
   },
-  btnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  btnText: { color: '#fff', fontSize: 17, fontFamily: fonts.bold },
 });

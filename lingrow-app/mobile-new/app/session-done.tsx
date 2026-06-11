@@ -10,7 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-const PRIMARY = '#7C3AED';
+import { colors, fonts } from '@/theme';
+
+const PRIMARY = colors.primary;
 
 export default function SessionDoneScreen() {
   const { studied, deckId, streak } = useLocalSearchParams<{
@@ -42,9 +44,9 @@ export default function SessionDoneScreen() {
   }, []);
 
   const motivationText = () => {
-    if (studiedCount >= 20) return 'Incrível! Você foi além hoje! 🚀';
-    if (studiedCount >= 10) return 'Ótimo trabalho! Consistência é tudo! 💪';
-    return 'Você está construindo um hábito poderoso! 🔥';
+    if (studiedCount >= 20) return 'Incrível! Você foi além hoje!';
+    if (studiedCount >= 10) return 'Ótimo trabalho! Consistência é tudo!';
+    return 'Você está construindo um hábito poderoso!';
   };
 
   return (
@@ -52,7 +54,9 @@ export default function SessionDoneScreen() {
       <View style={styles.container}>
         {/* emoji animado */}
         <Animated.View style={[styles.emojiContainer, { transform: [{ scale: scaleAnim }] }]}>
-          <Text style={styles.emoji}>🎉</Text>
+          <View style={styles.trophyWrap}>
+            <Ionicons name="trophy" size={48} color={colors.accent} />
+          </View>
         </Animated.View>
 
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
@@ -71,7 +75,7 @@ export default function SessionDoneScreen() {
               <Text style={styles.statLabel}>Cards</Text>
             </View>
             <View style={styles.statCard}>
-              <Ionicons name="flame" size={24} color="#F59E0B" />
+              <Ionicons name="flame" size={24} color={colors.accent} />
               <Text style={styles.statValue}>{streakCount}</Text>
               <Text style={styles.statLabel}>
                 {streakCount === 1 ? 'dia' : 'dias'} seguidos
@@ -87,7 +91,7 @@ export default function SessionDoneScreen() {
               style={styles.primaryBtn}
               onPress={() => router.replace({ pathname: '/study/[deckId]', params: { deckId } })}
             >
-              <Ionicons name="refresh" size={20} color="#fff" />
+              <Ionicons name="refresh" size={20} color={colors.surface} />
               <Text style={styles.primaryBtnText}>Continuar estudando</Text>
             </TouchableOpacity>
           )}
@@ -104,19 +108,19 @@ export default function SessionDoneScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, alignItems: 'center', justifyContent: 'space-between', padding: 32 },
   emojiContainer: { marginTop: 24 },
-  emoji: { fontSize: 80 },
+  trophyWrap: { width: 104, height: 104, borderRadius: 52, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   content: { alignItems: 'center', gap: 12 },
-  title: { fontSize: 30, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  sub: { fontSize: 17, color: '#6B7280', textAlign: 'center' },
-  highlight: { color: PRIMARY, fontWeight: '700' },
-  motivation: { fontSize: 15, color: '#6B7280', fontStyle: 'italic', textAlign: 'center' },
+  title: { fontSize: 30, fontFamily: fonts.extrabold, color: colors.text, textAlign: 'center' },
+  sub: { fontSize: 17, color: colors.textMuted, textAlign: 'center' },
+  highlight: { color: PRIMARY, fontFamily: fonts.bold },
+  motivation: { fontSize: 15, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
   statsRow: { flexDirection: 'row', gap: 16, marginTop: 8 },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -126,8 +130,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  statValue: { fontSize: 28, fontWeight: '800', color: '#111827' },
-  statLabel: { fontSize: 13, color: '#6B7280', textAlign: 'center' },
+  statValue: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text },
+  statLabel: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
   buttons: { width: '100%', gap: 12, marginBottom: 8 },
   primaryBtn: {
     flexDirection: 'row',
@@ -138,14 +142,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  primaryBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 17 },
   secondaryBtn: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
-  secondaryBtnText: { fontWeight: '700', fontSize: 17, color: '#111827' },
+  secondaryBtnText: { fontFamily: fonts.bold, fontSize: 17, color: colors.text },
 });

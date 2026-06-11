@@ -2,8 +2,10 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 
-const PRIMARY = '#7C3AED';
-const MUTED = '#9CA3AF';
+import { colors, fonts } from '@/theme';
+
+const PRIMARY = colors.primary;
+const MUTED = colors.textFaint;
 
 export default function TabLayout() {
   return (
@@ -14,8 +16,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: MUTED,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#F3F4F6',
-          backgroundColor: '#fff',
+          borderTopColor: colors.border,
+          backgroundColor: colors.surface,
           height: Platform.OS === 'ios' ? 80 : 64,
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 8,
@@ -27,7 +29,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontFamily: fonts.semibold,
           marginTop: 2,
         },
         tabBarIconStyle: {

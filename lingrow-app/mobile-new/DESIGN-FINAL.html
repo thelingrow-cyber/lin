@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lingrow — Como ficou (versão aplicada no app)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  :root {
+    --primary:#6D28D9; --primary2:#8B5CF6; --pSoft:#F3F0FF;
+    --bg:#FAF9F7; --surface:#FFFFFF;
+    --text:#1C1917; --muted:#78716C; --faint:#A8A29E;
+    --border:#E7E5E4; --borderSoft:#F1EFEE;
+    --accent:#F59E0B; --accentSoft:#FEF3C7;
+    --success:#16A34A; --successSoft:#DCFCE7; --successDark:#14532D;
+    --info:#2563EB; --infoSoft:#DBEAFE;
+    --danger:#DC2626; --dangerSoft:#FEE2E2;
+  }
+  body { font-family:'Plus Jakarta Sans', system-ui, sans-serif; background:#0f0e0d; color:#e7e5e4; padding:40px 16px 80px; }
+  .head { text-align:center; max-width:760px; margin:0 auto 44px; }
+  .head h1 { font-size:26px; font-weight:800; margin-bottom:10px; }
+  .head p { color:#a8a29e; font-size:15px; line-height:1.55; }
+  .stage { display:flex; gap:36px; justify-content:center; flex-wrap:wrap; max-width:1700px; margin:0 auto; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .col-label { font-size:13px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:#a78bfa; }
+
+  .phone { width:350px; height:730px; border-radius:44px; padding:12px; background:#1c1917; box-shadow:0 30px 80px rgba(0,0,0,.55); flex-shrink:0; }
+  .screen { width:100%; height:100%; border-radius:34px; overflow:hidden; display:flex; flex-direction:column; position:relative; background:var(--bg); }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:126px; height:25px; background:#1c1917; border-bottom-left-radius:16px; border-bottom-right-radius:16px; z-index:50; }
+  .content { flex:1; overflow-y:auto; padding:40px 18px 12px; display:flex; flex-direction:column; gap:17px; }
+  .content::-webkit-scrollbar { width:0; }
+  svg.i { width:1em; height:1em; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+  .grad { background:linear-gradient(135deg,var(--primary),var(--primary2)); }
+
+  /* ===== HOME ===== */
+  .greet { font-size:25px; font-weight:800; color:var(--text); letter-spacing:-.4px; }
+  .sub { font-size:14px; color:var(--muted); margin-top:-11px; }
+  .cta { border-radius:24px; padding:22px; text-align:center; color:#fff; display:flex; flex-direction:column; align-items:center; gap:8px; box-shadow:0 14px 28px -8px rgba(109,40,217,.45); }
+  .cta .ic { width:54px; height:54px; border-radius:27px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; }
+  .cta .t { font-size:19px; font-weight:800; }
+  .cta .s { font-size:13px; opacity:.9; }
+  .cta .btn { background:#fff; color:var(--primary); font-weight:700; font-size:14px; padding:10px 24px; border-radius:12px; margin-top:5px; }
+  .card { background:var(--surface); border-radius:20px; padding:18px; border:1px solid var(--borderSoft); box-shadow:0 6px 16px rgba(28,25,23,.06); display:flex; flex-direction:column; gap:11px; }
+  .card .row { display:flex; gap:12px; align-items:center; }
+  .card .cov { width:44px; height:44px; border-radius:13px; background:var(--pSoft); color:var(--primary); display:flex; align-items:center; justify-content:center; }
+  .card .name { font-size:14px; font-weight:700; color:var(--text); }
+  .card .desc { font-size:12px; color:var(--muted); margin-top:2px; }
+  .progress-row { display:flex; justify-content:space-between; font-size:12px; }
+  .progress-row .pl { color:var(--muted); } .progress-row .pp { color:var(--primary); font-weight:700; }
+  .bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:38%; background:var(--primary); border-radius:3px; }
+  .studybtn { background:var(--primary); color:#fff; text-align:center; font-weight:700; font-size:14px; padding:12px; border-radius:12px; }
+  .stats { display:flex; gap:12px; }
+  .stat { flex:1; background:var(--surface); border:1px solid var(--borderSoft); border-radius:20px; padding:17px; box-shadow:0 6px 16px rgba(28,25,23,.05); }
+  .stat .iw { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+  .stat .num { font-size:28px; font-weight:800; color:var(--text); margin-top:8px; }
+  .stat .lbl { font-size:12px; color:var(--muted); }
+  .review { border-radius:18px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 10px 22px -8px rgba(109,40,217,.4); }
+  .review .badge { width:44px; height:44px; border-radius:13px; background:rgba(255,255,255,.2); color:#fff; font-weight:800; font-size:17px; display:flex; align-items:center; justify-content:center; }
+  .review .rt { color:#fff; font-weight:700; font-size:15px; } .review .rs { color:rgba(255,255,255,.82); font-size:12px; }
+  .sec { display:flex; justify-content:space-between; align-items:center; }
+  .sec .st { font-size:19px; font-weight:800; color:var(--text); }
+  .sec .nb { background:var(--primary); color:#fff; font-size:12px; font-weight:700; padding:8px 13px; border-radius:11px; display:flex; align-items:center; gap:4px; }
+  .tabs { display:flex; background:var(--surface); border-top:1px solid var(--border); padding:10px 0 17px; }
+  .tab { flex:1; text-align:center; font-size:10px; font-weight:600; color:var(--faint); display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .tab .ti { font-size:20px; } .tab.active { color:var(--primary); }
+
+  /* ===== LOGIN ===== */
+  .login-content { justify-content:center; gap:12px; }
+  .logoWrap { width:88px; height:88px; border-radius:28px; align-self:center; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 28px -8px rgba(109,40,217,.45); color:#fff; }
+  .login-title { font-size:30px; font-weight:800; color:var(--primary); text-align:center; }
+  .login-sub { font-size:14px; color:var(--muted); text-align:center; margin-bottom:6px; }
+  .applebtn { background:#000; color:#fff; border-radius:14px; padding:15px; text-align:center; font-weight:600; font-size:15px; }
+  .googlebtn { border:1.5px solid var(--border); border-radius:14px; padding:14px; text-align:center; font-weight:600; font-size:15px; color:var(--text); background:var(--surface); }
+  .divider { display:flex; align-items:center; gap:8px; }
+  .divider i { flex:1; height:1px; background:var(--border); display:block; }
+  .divider span { font-size:12px; color:var(--faint); }
+  .input { border:1.5px solid var(--border); border-radius:12px; padding:13px; font-size:14px; color:var(--faint); background:var(--surface); }
+  .pbtn { background:var(--primary); color:#fff; border-radius:14px; padding:15px; text-align:center; font-weight:700; font-size:15px; }
+  .toggle { text-align:center; color:var(--primary); font-weight:600; font-size:13px; }
+
+  /* ===== STUDY ===== */
+  .flash-head { display:flex; align-items:center; justify-content:space-between; padding:14px 18px 8px; color:var(--muted); }
+  .flash-head .deckn { font-size:12px; color:var(--muted); }
+  .flash-head .cnt { font-size:14px; font-weight:700; color:var(--text); }
+  .flash-prog { height:4px; background:var(--border); margin:0 18px; border-radius:2px; overflow:hidden; }
+  .flash-prog > i { display:block; height:100%; width:30%; background:var(--primary); }
+  .flashcard { margin:14px 18px; background:var(--surface); border-radius:20px; padding:22px; flex:1; box-shadow:0 8px 22px rgba(28,25,23,.08); display:flex; flex-direction:column; }
+  .flashcard .side { font-size:11px; font-weight:700; letter-spacing:1px; color:var(--faint); }
+  .flashcard .body { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
+  .flashcard .big { font-size:22px; font-weight:700; color:var(--text); text-align:center; line-height:1.45; }
+  .flashcard .big .kw { color:var(--primary); }
+  .langbadge { background:var(--pSoft); color:var(--primary); font-size:13px; font-weight:600; padding:6px 14px; border-radius:20px; }
+  .hint { font-size:12px; color:var(--faint); text-align:center; }
+  .showbtn { margin:0 18px 14px; background:var(--primary); color:#fff; font-weight:700; font-size:16px; text-align:center; padding:17px; border-radius:50px; }
+  .srs { display:flex; flex-wrap:wrap; gap:10px; padding:0 14px 18px; }
+  .srs > div { width:calc(50% - 5px); border-radius:16px; padding:14px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .srs .si { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .srs .sl { font-size:14px; font-weight:700; } .srs .st2 { font-size:11px; color:var(--faint); }
+
+  /* ===== ONBOARDING ===== */
+  .ob-content { align-items:center; justify-content:center; gap:16px; padding:40px 36px; text-align:center; }
+  .ob-icon { width:120px; height:120px; border-radius:60px; display:flex; align-items:center; justify-content:center; }
+  .ob-title { font-size:26px; font-weight:700; color:var(--text); }
+  .ob-sub { font-size:15px; color:var(--muted); line-height:1.55; }
+  .dots { display:flex; gap:8px; justify-content:center; margin:26px 0; }
+  .dot2 { width:8px; height:8px; border-radius:4px; background:var(--border); }
+  .dot2.on { width:24px; background:var(--primary); }
+  .ob-btn { margin:0 22px 14px; background:var(--primary); color:#fff; font-weight:700; font-size:16px; text-align:center; padding:15px; border-radius:16px; }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 16-9 0 8-4 13-9 13Z"/><path d="M4 20c2-4 5-7 9-8"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></symbol>
+    <symbol id="cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3V9.5Z"/><path d="M9 21v-7h6v7"/></symbol>
+    <symbol id="refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.6a7 7 0 0 0 .1-1Z"/></symbol>
+    <symbol id="plusmini" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+    <symbol id="audio" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+    <symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></symbol>
+    <symbol id="bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.8.7-1 1.5-1 2.5H9c0-1-.2-1.8-1-2.5A6 6 0 0 1 12 3Z"/></symbol>
+    <symbol id="flame" viewBox="0 0 24 24"><path d="M12 21c-4 0-6.5-2.6-6.5-6 0-3 2-5 3.5-7 .4 1.6 1.2 2.4 2.5 3 -.5-2.7 .5-5.5 2.5-7 0 3 1.5 4.3 3 6 1.3 1.5 2 3 2 5 0 3.4-2.5 6-7 6Z"/></symbol>
+  </svg>
+
+  <div class="head">
+    <h1>🌱 Lingrow — Como ficou</h1>
+    <p>Espelho fiel do que está <b>aplicado no código agora</b>: fonte Plus Jakarta Sans, ícones profissionais, gradientes da marca, saudação pelo seu nome e os neutros quentes. Quatro telas principais:</p>
+  </div>
+
+  <div class="stage">
+
+    <!-- LOGIN -->
+    <div class="col">
+      <div class="col-label">Login</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="content login-content">
+            <div class="logoWrap grad"><svg class="i" style="width:40px;height:40px"><use href="#leaf"/></svg></div>
+            <div class="login-title">Lingrow</div>
+            <div class="login-sub">Aprenda inglês com flashcards inteligentes</div>
+            <div class="applebtn"> Sign in with Apple</div>
+            <div class="googlebtn">G&nbsp; Continuar com Google</div>
+            <div class="divider"><i></i><span>ou</span><i></i></div>
+            <div class="input">Email</div>
+            <div class="input">Senha</div>
+            <div class="pbtn">Entrar</div>
+            <div class="toggle">Não tem conta? Criar agora</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div class="col">
+      <div class="col-label">Início</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="content">
+            <div class="greet" id="greet">Bom dia, Vitor 👋</div>
+            <div class="sub">Pronto pra mais um dia de inglês?</div>
+            <div class="cta grad">
+              <div class="ic"><svg class="i" style="width:26px;height:26px"><use href="#leaf"/></svg></div>
+              <div class="t">Estudar hoje</div>
+              <div class="s">Você tem 12 cards esperando.</div>
+              <div class="btn">Estudar agora</div>
+            </div>
+            <div class="card">
+              <div class="row"><div class="cov"><svg class="i" style="width:22px;height:22px"><use href="#book"/></svg></div><div><div class="name">1000 Frases Essenciais em Inglês</div><div class="desc">Frases reais usadas no dia a dia.</div></div></div>
+              <div class="progress-row"><span class="pl">380 / 1000 frases aprendidas</span><span class="pp">38%</span></div>
+              <div class="bar"><i></i></div>
+              <div class="studybtn">Estudar agora</div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="iw" style="background:var(--pSoft); color:var(--primary)"><svg class="i" style="width:22px;height:22px"><use href="#book"/></svg></div><div class="num">3</div><div class="lbl">Decks</div></div>
+              <div class="stat"><div class="iw" style="background:var(--infoSoft); color:var(--info)"><svg class="i" style="width:22px;height:22px"><use href="#cap"/></svg></div><div class="num">24</div><div class="lbl">Cards</div></div>
+            </div>
+            <div class="review grad">
+              <div class="badge">12</div>
+              <div style="flex:1"><div class="rt">Para Revisar</div><div class="rs">Clique para estudar</div></div>
+              <svg class="i" style="width:18px;height:18px;color:rgba(255,255,255,.7)"><use href="#chev"/></svg>
+            </div>
+            <div class="sec"><div class="st">Meus Decks</div><div class="nb"><svg class="i" style="width:12px;height:12px"><use href="#plusmini"/></svg> Novo Deck</div></div>
+          </div>
+          <div class="tabs">
+            <div class="tab active"><span class="ti"><svg class="i"><use href="#home"/></svg></span>Início</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#refresh"/></svg></span>Revisar</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#plus"/></svg></span>Criar</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#gear"/></svg></span>Config</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDY -->
+    <div class="col">
+      <div class="col-label">Estudo</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div style="height:34px"></div>
+          <div class="flash-head">
+            <svg class="i" style="width:20px;height:20px"><use href="#back"/></svg>
+            <div style="text-align:center"><div class="deckn">1000 Frases Essenciais</div><div class="cnt">4 / 12</div></div>
+            <svg class="i" style="width:20px;height:20px"><use href="#refresh"/></svg>
+          </div>
+          <div class="flash-prog"><i></i></div>
+          <div class="flashcard">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="side">FRENTE</span>
+              <svg class="i" style="width:20px;height:20px;color:var(--primary)"><use href="#audio"/></svg>
+            </div>
+            <div class="body">
+              <div class="big">I've been <span class="kw">working</span> on this project for months</div>
+              <div class="langbadge">🇬🇧 Inglês</div>
+              <div class="hint">Clique em "Mostrar Tradução" para ver a resposta</div>
+            </div>
+          </div>
+          <div class="showbtn">Mostrar Tradução</div>
+          <div class="srs">
+            <div style="background:var(--dangerSoft)"><div class="si" style="background:var(--danger)"><svg class="i" style="width:22px;height:22px"><use href="#x"/></svg></div><div class="sl" style="color:var(--danger)">Novamente</div><div class="st2">&lt; 1 min</div></div>
+            <div style="background:var(--accentSoft)"><div class="si" style="background:var(--accent)"><svg class="i" style="width:22px;height:22px"><use href="#alert"/></svg></div><div class="sl" style="color:var(--accent)">Difícil</div><div class="st2">Repete</div></div>
+            <div style="background:var(--successSoft)"><div class="si" style="background:var(--success)"><svg class="i" style="width:22px;height:22px"><use href="#check"/></svg></div><div class="sl" style="color:var(--success)">Bom</div><div class="st2">Próximo</div></div>
+            <div style="background:var(--pSoft)"><div class="si" style="background:var(--primary)"><svg class="i" style="width:22px;height:22px"><use href="#spark"/></svg></div><div class="sl" style="color:var(--primary)">Fácil</div><div class="st2">4 dias</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="col">
+      <div class="col-label">Onboarding</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="content ob-content">
+            <div class="ob-icon" style="background:var(--infoSoft); color:var(--info)"><svg class="i" style="width:52px;height:52px"><use href="#bulb"/></svg></div>
+            <div class="ob-title">Revisão inteligente</div>
+            <div class="ob-sub">O app lembra quando você precisa revisar cada frase. Estude poucos minutos por dia e evolua de verdade.</div>
+          </div>
+          <div class="dots"><div class="dot2"></div><div class="dot2 on"></div><div class="dot2"></div></div>
+          <div class="ob-btn">Próximo</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="text-align:center; color:#57534e; font-size:12px; margin-top:48px; max-width:680px; margin-left:auto; margin-right:auto; line-height:1.6;">
+    Maquete fiel ao código aplicado em <code>lingrow-app/mobile-new</code> (tokens de <code>theme/index.ts</code>, fonte e ícones reais).
+    No celular, o app real tem ainda as animações (flip do card, transições).
+  </p>
+
+  <script>
+    // saudação dinâmica, igual à lógica do app
+    const h = new Date().getHours();
+    const dp = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    document.getElementById('greet').textContent = dp + ', Vitor 👋';
+  </script>
+</body>
+</html>

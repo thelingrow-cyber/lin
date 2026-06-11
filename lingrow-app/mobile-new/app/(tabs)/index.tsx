@@ -3,8 +3,10 @@ import React, { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
+  KeyboardAvoidingView,
   Linking,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +16,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
+import { useAuth } from '@/context/auth';
 import {
   getDecks,
   getCards,
@@ -27,12 +31,14 @@ import {
 } from '@/store/lingrow';
 import { DECK_1000, SENTENCES } from '@/data/sentences';
 import { Analytics } from '@/lib/analytics';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20';
 const BETA_WELCOME_KEY = 'beta_welcome_done';
 
 export default function HomeScreen() {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [totalCards, setTotalCards] = useState(0);
@@ -48,7 +54,7 @@ export default function HomeScreen() {
   const [newDeckColor, setNewDeckColor] = useState(PRIMARY);
   const [selectedGoal, setSelectedGoal] = useState(5);
 
-  const DECK_COLORS = ['#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+  const DECK_COLORS = [colors.primary, colors.info, colors.success, colors.accent, colors.danger, '#EC4899'];
 
   const dismissBetaWelcome = useCallback(async () => {
     await AsyncStorage.setItem(BETA_WELCOME_KEY, 'true');
@@ -150,12 +156,20 @@ export default function HomeScreen() {
 
   const isToday = settings?.lastStudyDate === new Date().toDateString();
 
+  // saudação pessoal: nome do perfil (Apple/Google) ou fallback por horário
+  const firstName = String(
+    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ''
+  ).trim().split(' ')[0];
+  const hour = new Date().getHours();
+  const daypart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  const greeting = firstName ? `${daypart}, ${firstName}` : daypart;
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 32 }}>🌱</Text>
-          <Text style={{ color: PRIMARY, fontWeight: '700', marginTop: 12, fontSize: 16 }}>Carregando...</Text>
+          <Ionicons name="leaf" size={36} color={PRIMARY} />
+          <Text style={{ color: PRIMARY, fontFamily: fonts.bold, marginTop: 12, fontSize: 16 }}>Carregando...</Text>
         </View>
       </SafeAreaView>
     );
@@ -164,25 +178,39 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.headerTitle}>Bem-vindo ao Lingrow</Text>
-        <Text style={styles.headerSub}>Aprenda inglês com flashcards inteligentes</Text>
+        <Text style={styles.headerTitle}>{greeting} 👋</Text>
+        <Text style={styles.headerSub}>Pronto pra mais um dia de inglês?</Text>
 
         {/* streak (só quando nada vencido) ou CTA para estudar */}
         {isToday && reviewCount === 0 ? (
           <View style={styles.streakCard}>
-            <Text style={styles.streakEmoji}>🎉</Text>
+            <View style={styles.streakIconWrap}>
+              <Ionicons name="trophy" size={26} color={colors.successDark} />
+            </View>
             <Text style={styles.streakTitle}>Você está em dia hoje!</Text>
-            <Text style={styles.streakDays}>🔥 {settings?.streak ?? 1} dia{(settings?.streak ?? 1) !== 1 ? 's' : ''} seguido{(settings?.streak ?? 1) !== 1 ? 's' : ''}</Text>
+            <View style={styles.streakRow}>
+              <Ionicons name="flame" size={16} color={colors.accent} />
+              <Text style={styles.streakDays}>{settings?.streak ?? 1} dia{(settings?.streak ?? 1) !== 1 ? 's' : ''} seguido{(settings?.streak ?? 1) !== 1 ? 's' : ''}</Text>
+            </View>
             <Text style={styles.streakSub}>Volte amanhã para novos cards.</Text>
           </View>
         ) : (
-          <TouchableOpacity style={styles.ctaCard} onPress={startStudy} activeOpacity={0.9}>
-            <Text style={styles.ctaEmoji}>🌱</Text>
-            <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : 'Comece agora!'}</Text>
-            <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Suas primeiras frases estão esperando por você.'}</Text>
-            <View style={styles.ctaBtn}>
-              <Text style={styles.ctaBtnText}>Estudar agora</Text>
-            </View>
+          <TouchableOpacity onPress={startStudy} activeOpacity={0.9}>
+            <LinearGradient
+              colors={[colors.primary, colors.primaryLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.ctaCard}
+            >
+              <View style={styles.ctaIconWrap}>
+                <Ionicons name="leaf" size={26} color={colors.onPrimary} />
+              </View>
+              <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : 'Comece agora!'}</Text>
+              <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Suas primeiras frases estão esperando por você.'}</Text>
+              <View style={styles.ctaBtn}>
+                <Text style={styles.ctaBtnText}>Estudar agora</Text>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
@@ -190,7 +218,9 @@ export default function HomeScreen() {
         {learnedCount > 0 && (
           <TouchableOpacity style={styles.deckCard} onPress={() => router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })} activeOpacity={0.85}>
             <View style={styles.deckCardRow}>
-              <Text style={styles.deckCardIcon}>📚</Text>
+              <View style={styles.deckCardIconWrap}>
+                <Ionicons name="book" size={22} color={PRIMARY} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.deckCardName}>1000 Frases Essenciais em Inglês</Text>
                 <Text style={styles.deckCardDesc}>Aprenda inglês com frases reais usadas no dia a dia.</Text>
@@ -217,26 +247,34 @@ export default function HomeScreen() {
             <Text style={styles.statLabel}>Decks</Text>
           </View>
           <View style={styles.statCard}>
-            <View style={[styles.statIconWrap, { backgroundColor: '#EFF6FF' }]}><Ionicons name="school-outline" size={22} color="#3B82F6" /></View>
+            <View style={[styles.statIconWrap, { backgroundColor: colors.infoSoft }]}><Ionicons name="school-outline" size={22} color={colors.info} /></View>
             <Text style={styles.statNum}>{totalCards}</Text>
             <Text style={styles.statLabel}>Cards</Text>
           </View>
         </View>
 
         {/* review */}
-        <TouchableOpacity style={styles.reviewCard} onPress={() => router.push('/(tabs)/revisar')} activeOpacity={0.85}>
-          <View style={styles.reviewBadge}><Text style={styles.reviewBadgeText}>{reviewCount}</Text></View>
-          <View>
-            <Text style={styles.reviewTitle}>Para Revisar</Text>
-            <Text style={styles.reviewSub}>Clique para estudar</Text>
-          </View>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/revisar')} activeOpacity={0.85}>
+          <LinearGradient
+            colors={[colors.primary, colors.primaryLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.reviewCard}
+          >
+            <View style={styles.reviewBadge}><Text style={styles.reviewBadgeText}>{reviewCount}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.reviewTitle}>Para Revisar</Text>
+              <Text style={styles.reviewSub}>Clique para estudar</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.7)" />
+          </LinearGradient>
         </TouchableOpacity>
 
         {/* meus decks */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Meus Decks</Text>
           <TouchableOpacity style={styles.newDeckBtn} onPress={() => setShowNewDeckModal(true)}>
-            <Ionicons name="add" size={14} color="#fff" />
+            <Ionicons name="add" size={14} color={colors.surface} />
             <Text style={styles.newDeckBtnText}>Novo Deck</Text>
           </TouchableOpacity>
         </View>
@@ -263,7 +301,9 @@ export default function HomeScreen() {
         <View style={styles.betaOverlay}>
           <View style={styles.betaBox}>
             <View style={styles.betaBody}>
-              <Text style={styles.betaEmoji}>🌱</Text>
+              <View style={styles.betaIconWrap}>
+                <Ionicons name="leaf" size={30} color={PRIMARY} />
+              </View>
               <Text style={styles.betaTitle}>Você chegou primeiro.</Text>
               <Text style={styles.betaText}>
                 O Lingrow ainda está crescendo — e você está aqui desde o início.
@@ -283,7 +323,9 @@ export default function HomeScreen() {
       <Modal visible={showGoalModal} transparent animationType="slide">
         <View style={styles.overlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalIcon}>🎯</Text>
+            <View style={styles.modalIconWrap}>
+              <Ionicons name="flag" size={26} color={PRIMARY} />
+            </View>
             <Text style={styles.modalTitle}>1000 Frases Essenciais</Text>
             <Text style={styles.modalSub}>Quantas frases você quer aprender por dia?</Text>
             {[
@@ -310,12 +352,15 @@ export default function HomeScreen() {
 
       {/* New Deck modal */}
       <Modal visible={showNewDeckModal} transparent animationType="slide">
-        <View style={styles.overlay}>
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Criar Novo Deck</Text>
               <TouchableOpacity onPress={() => setShowNewDeckModal(false)}>
-                <Ionicons name="close" size={24} color="#6B7280" />
+                <Ionicons name="close" size={24} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
             <Text style={styles.fieldLabel}>Nome do Deck</Text>
@@ -324,7 +369,7 @@ export default function HomeScreen() {
               placeholder="Ex: Vocabulário Básico"
               value={newDeckName}
               onChangeText={setNewDeckName}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
             <Text style={styles.fieldLabel}>Descrição (opcional)</Text>
             <TextInput
@@ -333,7 +378,7 @@ export default function HomeScreen() {
               value={newDeckDesc}
               onChangeText={setNewDeckDesc}
               multiline
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textFaint}
             />
             <Text style={styles.fieldLabel}>Cor</Text>
             <View style={styles.colorRow}>
@@ -354,91 +399,92 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, gap: 24, paddingBottom: 40 },
-  headerTitle: { fontSize: 30, fontWeight: '800', color: PRIMARY, marginBottom: 4 },
-  headerSub: { fontSize: 15, color: '#6B7280', marginBottom: 4 },
-  streakCard: { backgroundColor: '#D1FAE5', borderRadius: 20, padding: 28, alignItems: 'center', gap: 6 },
-  streakEmoji: { fontSize: 32 },
-  streakTitle: { fontSize: 18, fontWeight: '700', color: '#065F46' },
-  streakDays: { fontSize: 15, color: '#065F46' },
-  streakSub: { fontSize: 14, color: '#065F46' },
-  ctaCard: { borderRadius: 16, padding: 20, alignItems: 'center', gap: 8, backgroundColor: PRIMARY },
-  ctaEmoji: { fontSize: 32 },
-  ctaTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  headerTitle: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text, marginBottom: 4, letterSpacing: -0.4 },
+  headerSub: { fontSize: 15, color: colors.textMuted, marginBottom: 4 },
+  streakCard: { backgroundColor: colors.successSoft, borderRadius: 20, padding: 28, alignItems: 'center', gap: 6 },
+  streakIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.65)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  streakTitle: { fontSize: 18, fontFamily: fonts.bold, color: colors.successDark },
+  streakDays: { fontSize: 15, color: colors.successDark },
+  streakSub: { fontSize: 14, color: colors.successDark },
+  ctaCard: { borderRadius: 24, padding: 22, alignItems: 'center', gap: 8, shadowColor: PRIMARY, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  ctaIconWrap: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  ctaTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.surface },
   ctaSub: { fontSize: 14, color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
-  ctaBtn: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10, marginTop: 4 },
-  ctaBtnText: { color: PRIMARY, fontWeight: '700', fontSize: 15 },
-  deckCard: { backgroundColor: '#fff', borderRadius: 20, padding: 20, gap: 12, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: '#F3F4F6' },
+  ctaBtn: { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10, marginTop: 4 },
+  ctaBtnText: { color: PRIMARY, fontFamily: fonts.bold, fontSize: 15 },
+  deckCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, gap: 12, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: colors.borderSoft },
   deckCardRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  deckCardIcon: { fontSize: 28 },
-  deckCardName: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  deckCardDesc: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  deckCardIconWrap: { width: 44, height: 44, borderRadius: 13, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  deckCardName: { fontSize: 15, fontFamily: fonts.bold, color: colors.text },
+  deckCardDesc: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressText: { fontSize: 13, color: '#6B7280' },
-  progressPct: { fontSize: 13, color: PRIMARY, fontWeight: '700' },
-  progressBarBg: { height: 6, backgroundColor: '#E5E7EB', borderRadius: 3 },
+  progressText: { fontSize: 13, color: colors.textMuted },
+  progressPct: { fontSize: 13, color: PRIMARY, fontFamily: fonts.bold },
+  progressBarBg: { height: 6, backgroundColor: colors.border, borderRadius: 3 },
   progressBarFill: { height: 6, backgroundColor: PRIMARY, borderRadius: 3 },
   studyBtn: { backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  studyBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  studyBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 15 },
   statsRow: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 20, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 3, borderWidth: 1, borderColor: '#F3F4F6' },
-  statIconWrap: { width: 52, height: 52, borderRadius: 14, backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center' },
-  statNum: { fontSize: 32, fontWeight: '800', color: '#111827' },
-  statLabel: { fontSize: 13, color: '#6B7280' },
-  reviewCard: { backgroundColor: PRIMARY, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 },
+  statCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 20, padding: 20, gap: 8, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 3, borderWidth: 1, borderColor: colors.borderSoft },
+  statIconWrap: { width: 52, height: 52, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  statNum: { fontSize: 32, fontFamily: fonts.extrabold, color: colors.text },
+  statLabel: { fontSize: 13, color: colors.textMuted },
+  reviewCard: { borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16, shadowColor: PRIMARY, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
   reviewBadge: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  reviewBadgeText: { color: '#fff', fontWeight: '800', fontSize: 18 },
-  reviewTitle: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  reviewBadgeText: { color: colors.surface, fontFamily: fonts.extrabold, fontSize: 18 },
+  reviewTitle: { color: colors.surface, fontFamily: fonts.bold, fontSize: 16 },
   reviewSub: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  sectionTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.text },
   newDeckBtn: { flexDirection: 'row', backgroundColor: PRIMARY, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, gap: 4, alignItems: 'center' },
-  newDeckBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  deckItem: { backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: '#F3F4F6' },
+  newDeckBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 13 },
+  deckItem: { backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: colors.borderSoft },
   deckItemCover: { height: 90, alignItems: 'center', justifyContent: 'center' },
   deckItemBody: { padding: 16, gap: 4 },
-  deckItemName: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  deckItemDesc: { fontSize: 13, color: '#6B7280' },
+  deckItemName: { fontSize: 16, fontFamily: fonts.bold, color: colors.text },
+  deckItemDesc: { fontSize: 13, color: colors.textMuted },
   deckItemFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  deckItemCountLabel: { fontSize: 13, color: '#9CA3AF' },
-  deckItemCountVal: { fontSize: 13, fontWeight: '700' },
+  deckItemCountLabel: { fontSize: 13, color: colors.textFaint },
+  deckItemCountVal: { fontSize: 13, fontFamily: fonts.bold },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   betaOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  betaBox: { backgroundColor: '#fff', borderRadius: 24, overflow: 'hidden', width: '100%', maxWidth: 360 },
+  betaBox: { backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', width: '100%', maxWidth: 360 },
   betaHeader: { backgroundColor: PRIMARY, alignItems: 'center', paddingVertical: 28 },
-  betaEmoji: { fontSize: 52 },
+  betaIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   betaBody: { padding: 24, gap: 14 },
-  betaTitle: { fontSize: 22, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  betaText: { fontSize: 15, color: '#6B7280', textAlign: 'center', lineHeight: 22 },
+  betaTitle: { fontSize: 22, fontFamily: fonts.extrabold, color: colors.text, textAlign: 'center' },
+  betaText: { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
   betaFeedbackBtn: { borderWidth: 1.5, borderColor: PRIMARY, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-  betaFeedbackText: { color: PRIMARY, fontWeight: '700', fontSize: 15 },
+  betaFeedbackText: { color: PRIMARY, fontFamily: fonts.bold, fontSize: 15 },
   betaCloseBtn: { backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  betaCloseText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
+  betaCloseText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 16 },
+  modalBox: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalIcon: { fontSize: 40, textAlign: 'center' },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  modalSub: { fontSize: 15, color: '#6B7280', textAlign: 'center' },
-  goalOpt: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, padding: 16, flexDirection: 'row', justifyContent: 'space-between' },
-  goalOptActive: { borderColor: PRIMARY, backgroundColor: '#EDE9FE' },
-  goalNum: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  goalLabel: { fontSize: 14, color: '#6B7280' },
+  modalIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
+  modalTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.text, textAlign: 'center' },
+  modalSub: { fontSize: 15, color: colors.textMuted, textAlign: 'center' },
+  goalOpt: { borderWidth: 1.5, borderColor: colors.border, borderRadius: 14, padding: 16, flexDirection: 'row', justifyContent: 'space-between' },
+  goalOptActive: { borderColor: PRIMARY, backgroundColor: colors.primarySoft },
+  goalNum: { fontSize: 16, fontFamily: fonts.bold, color: colors.text },
+  goalLabel: { fontSize: 14, color: colors.textMuted },
   modalBtn: { backgroundColor: PRIMARY, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  modalBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  input: { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 15, color: '#111827', backgroundColor: '#fff' },
+  modalBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 16 },
+  fieldLabel: { fontSize: 14, fontFamily: fonts.semibold, color: colors.text },
+  input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: 12, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.surface },
   colorRow: { flexDirection: 'row', gap: 12 },
   colorDot: { width: 36, height: 36, borderRadius: 18 },
-  colorDotSelected: { borderWidth: 3, borderColor: '#111827' },
+  colorDotSelected: { borderWidth: 3, borderColor: colors.text },
   modalFooter: { flexDirection: 'row', gap: 12 },
-  cancelBtn: { flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  cancelBtnText: { fontWeight: '700', fontSize: 16, color: '#111827' },
+  cancelBtn: { flex: 1, borderWidth: 1.5, borderColor: colors.border, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  cancelBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.text },
 });

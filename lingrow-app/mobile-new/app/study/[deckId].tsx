@@ -24,8 +24,9 @@ import {
 } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
 import { requestNotificationPermission, scheduleNextReviewNotification, hasNotificationPermission } from '@/lib/notifications';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 
 function HighlightedText({ text, keyword, style }: { text: string; keyword?: string; style: any }) {
   if (!keyword) return <Text style={style}>{text}</Text>;
@@ -34,7 +35,7 @@ function HighlightedText({ text, keyword, style }: { text: string; keyword?: str
     <Text style={style}>
       {parts.map((p, i) =>
         p.toLowerCase() === keyword.toLowerCase() ? (
-          <Text key={i} style={{ color: PRIMARY, fontWeight: '700' }}>{p}</Text>
+          <Text key={i} style={{ color: PRIMARY, fontFamily: fonts.bold }}>{p}</Text>
         ) : (
           p
         )
@@ -144,10 +145,12 @@ export default function StudyScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.doneContainer}>
-          <Text style={styles.doneEmoji}>🎉</Text>
+          <View style={styles.doneIconWrap}>
+            <Ionicons name="trophy" size={36} color={colors.accent} />
+          </View>
           <Text style={styles.doneTitle}>Sessão concluída</Text>
-          <Text style={styles.doneSub}>Você estudou <Text style={{ color: PRIMARY, fontWeight: '700' }}>{studied} frases</Text> hoje.</Text>
-          <Text style={styles.doneMotivation}>Você está construindo um hábito poderoso! 🔥</Text>
+          <Text style={styles.doneSub}>Você estudou <Text style={{ color: PRIMARY, fontFamily: fonts.bold }}>{studied} frases</Text> hoje.</Text>
+          <Text style={styles.doneMotivation}>Você está construindo um hábito poderoso!</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => void loadSession()}>
             <Text style={styles.doneBtnText}>Continuar estudando</Text>
           </TouchableOpacity>
@@ -163,7 +166,7 @@ export default function StudyScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.doneContainer}>
-          <Text style={styles.doneEmoji}>⏳</Text>
+          <Ionicons name="hourglass-outline" size={40} color={colors.textFaint} />
           <Text style={styles.doneTitle}>Carregando...</Text>
         </View>
       </SafeAreaView>
@@ -174,7 +177,9 @@ export default function StudyScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.doneContainer}>
-          <Text style={styles.doneEmoji}>✅</Text>
+          <View style={[styles.doneIconWrap, { backgroundColor: colors.successSoft }]}>
+            <Ionicons name="checkmark-done" size={36} color={colors.success} />
+          </View>
           <Text style={styles.doneTitle}>Nada para estudar</Text>
           <Text style={styles.doneSub}>Você está em dia! Volte amanhã para novos cards.</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace('/(tabs)')}>
@@ -199,14 +204,14 @@ export default function StudyScreen() {
           }
           router.back();
         }}>
-          <Ionicons name="arrow-back" size={22} color="#6B7280" />
+          <Ionicons name="arrow-back" size={22} color={colors.textMuted} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerDeck}>{deckName}</Text>
           <Text style={styles.headerCount}>{index + 1} / {total}</Text>
         </View>
         <TouchableOpacity onPress={() => { setIndex(0); setFlipped(false); flipAnim.setValue(0); }}>
-          <Ionicons name="refresh" size={22} color="#6B7280" />
+          <Ionicons name="refresh" size={22} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -266,7 +271,8 @@ export default function StudyScreen() {
           </View>
           {current.keyword && current.keywordPt && (
             <View style={styles.tipRow}>
-              <Text style={styles.tipText}>💡 {current.keyword} — {current.keywordPt}</Text>
+              <Ionicons name="bulb-outline" size={16} color={colors.accent} />
+              <Text style={styles.tipText}>{current.keyword} — {current.keywordPt}</Text>
             </View>
           )}
         </Animated.View>
@@ -288,32 +294,32 @@ function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) =
   return (
     <View style={styles.srsGrid}>
       <TouchableOpacity style={[styles.srsBtn, styles.srsBtnAgain]} onPress={() => onAnswer('again')}>
-        <View style={[styles.srsIcon, { backgroundColor: '#EF4444' }]}>
-          <Ionicons name="close-circle" size={24} color="#fff" />
+        <View style={[styles.srsIcon, { backgroundColor: colors.danger }]}>
+          <Ionicons name="close-circle" size={24} color={colors.surface} />
         </View>
-        <Text style={[styles.srsBtnLabel, { color: '#EF4444' }]}>Novamente</Text>
+        <Text style={[styles.srsBtnLabel, { color: colors.danger }]}>Novamente</Text>
         <Text style={styles.srsBtnTime}>{'< 1 min'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.srsBtn, styles.srsBtnHard]} onPress={() => onAnswer('hard')}>
-        <View style={[styles.srsIcon, { backgroundColor: '#F59E0B' }]}>
-          <Ionicons name="alert-circle" size={24} color="#fff" />
+        <View style={[styles.srsIcon, { backgroundColor: colors.accent }]}>
+          <Ionicons name="alert-circle" size={24} color={colors.surface} />
         </View>
-        <Text style={[styles.srsBtnLabel, { color: '#F59E0B' }]}>Difícil</Text>
+        <Text style={[styles.srsBtnLabel, { color: colors.accent }]}>Difícil</Text>
         <Text style={styles.srsBtnTime}>Repete</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.srsBtn, styles.srsBtnGood]} onPress={() => onAnswer('good')}>
-        <View style={[styles.srsIcon, { backgroundColor: '#10B981' }]}>
-          <Ionicons name="checkmark-circle" size={24} color="#fff" />
+        <View style={[styles.srsIcon, { backgroundColor: colors.success }]}>
+          <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
         </View>
-        <Text style={[styles.srsBtnLabel, { color: '#10B981' }]}>Bom</Text>
+        <Text style={[styles.srsBtnLabel, { color: colors.success }]}>Bom</Text>
         <Text style={styles.srsBtnTime}>Próximo</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={[styles.srsBtn, styles.srsBtnEasy]} onPress={() => onAnswer('easy')}>
         <View style={[styles.srsIcon, { backgroundColor: PRIMARY }]}>
-          <Ionicons name="sparkles" size={24} color="#fff" />
+          <Ionicons name="sparkles" size={24} color={colors.surface} />
         </View>
         <Text style={[styles.srsBtnLabel, { color: PRIMARY }]}>Fácil</Text>
         <Text style={styles.srsBtnTime}>4 dias</Text>
@@ -323,19 +329,19 @@ function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) =
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F3F4F6' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerDeck: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  headerCount: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  progressBg: { height: 4, backgroundColor: '#E5E7EB', marginHorizontal: 16, borderRadius: 2 },
+  headerDeck: { fontSize: 13, color: colors.textMuted, fontFamily: fonts.medium },
+  headerCount: { fontSize: 15, fontFamily: fonts.bold, color: colors.text },
+  progressBg: { height: 4, backgroundColor: colors.border, marginHorizontal: 16, borderRadius: 2 },
   progressFill: { height: 4, backgroundColor: PRIMARY, borderRadius: 2 },
   cardArea: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', padding: 16, paddingTop: 8 },
   swipeOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 20, zIndex: 10 },
   flashcard: {
     width: '100%',
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 24,
     alignItems: 'stretch',
@@ -356,40 +362,40 @@ const styles = StyleSheet.create({
   cardVisible: { opacity: 1 },
   cardHidden: { opacity: 0 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
-  cardSide: { fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1 },
+  cardSide: { fontSize: 11, fontFamily: fonts.bold, color: colors.textFaint, letterSpacing: 1 },
   audioBtn: { padding: 4 },
-  cardText: { fontSize: 24, fontWeight: '700', color: '#111827', textAlign: 'center', lineHeight: 34 },
-  cardTextSmall: { fontSize: 17, color: '#374151' },
-  cardTextBold: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  langBadge: { alignSelf: 'center', backgroundColor: '#EDE9FE', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
-  langBadgeText: { fontSize: 13, color: PRIMARY, fontWeight: '600' },
-  cardHint: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
+  cardText: { fontSize: 24, fontFamily: fonts.bold, color: colors.text, textAlign: 'center', lineHeight: 34 },
+  cardTextSmall: { fontSize: 17, color: colors.text },
+  cardTextBold: { fontSize: 20, fontFamily: fonts.bold, color: colors.text },
+  langBadge: { alignSelf: 'center', backgroundColor: colors.primarySoft, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  langBadgeText: { fontSize: 13, color: PRIMARY, fontFamily: fonts.semibold },
+  cardHint: { fontSize: 13, color: colors.textFaint, textAlign: 'center' },
   enRow: { flexDirection: 'column', gap: 8 },
   ptRow: { flexDirection: 'column', gap: 8 },
-  enBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  enBadgeText: { fontSize: 12, fontWeight: '700', color: '#3B82F6' },
-  ptBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' },
-  ptBadgeText: { fontSize: 12, fontWeight: '700', color: '#10B981' },
-  tipRow: { backgroundColor: '#F9FAFB', borderRadius: 10, padding: 12 },
-  tipText: { fontSize: 13, color: '#6B7280' },
+  enBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center' },
+  enBadgeText: { fontSize: 12, fontFamily: fonts.bold, color: colors.info },
+  ptBadge: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center' },
+  ptBadgeText: { fontSize: 12, fontFamily: fonts.bold, color: colors.success },
+  tipRow: { backgroundColor: colors.borderSoft, borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tipText: { fontSize: 13, color: colors.textMuted, flex: 1 },
   showBtn: { marginHorizontal: 16, marginBottom: 24, backgroundColor: PRIMARY, borderRadius: 50, paddingVertical: 20, alignItems: 'center' },
-  showBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  showBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 17 },
   srsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 10, marginBottom: 12 },
   srsBtn: { width: '47%', borderRadius: 16, padding: 18, alignItems: 'center', gap: 8 },
-  srsBtnAgain: { backgroundColor: '#FEE2E2' },
-  srsBtnHard: { backgroundColor: '#FEF3C7' },
-  srsBtnGood: { backgroundColor: '#D1FAE5' },
-  srsBtnEasy: { backgroundColor: '#EDE9FE' },
+  srsBtnAgain: { backgroundColor: colors.dangerSoft },
+  srsBtnHard: { backgroundColor: colors.accentSoft },
+  srsBtnGood: { backgroundColor: colors.successSoft },
+  srsBtnEasy: { backgroundColor: colors.primarySoft },
   srsIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  srsBtnLabel: { fontSize: 15, fontWeight: '700' },
-  srsBtnTime: { fontSize: 12, color: '#9CA3AF' },
+  srsBtnLabel: { fontSize: 15, fontFamily: fonts.bold },
+  srsBtnTime: { fontSize: 12, color: colors.textFaint },
   doneContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 },
-  doneEmoji: { fontSize: 64 },
-  doneTitle: { fontSize: 28, fontWeight: '800', color: '#111827' },
-  doneSub: { fontSize: 16, color: '#6B7280', textAlign: 'center' },
-  doneMotivation: { fontSize: 15, color: '#6B7280', fontStyle: 'italic', textAlign: 'center' },
+  doneIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  doneTitle: { fontSize: 28, fontFamily: fonts.extrabold, color: colors.text },
+  doneSub: { fontSize: 16, color: colors.textMuted, textAlign: 'center' },
+  doneMotivation: { fontSize: 15, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
   doneBtn: { width: '100%', backgroundColor: PRIMARY, borderRadius: 16, paddingVertical: 18, alignItems: 'center', marginTop: 8 },
-  doneBtnText: { color: '#fff', fontWeight: '700', fontSize: 17 },
-  doneSecondaryBtn: { width: '100%', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 16, paddingVertical: 18, alignItems: 'center' },
-  doneSecondaryText: { fontWeight: '700', fontSize: 17, color: '#111827' },
+  doneBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 17 },
+  doneSecondaryBtn: { width: '100%', borderWidth: 1.5, borderColor: colors.border, borderRadius: 16, paddingVertical: 18, alignItems: 'center' },
+  doneSecondaryText: { fontFamily: fonts.bold, fontSize: 17, color: colors.text },
 });

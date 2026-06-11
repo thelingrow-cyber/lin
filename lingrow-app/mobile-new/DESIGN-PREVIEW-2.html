@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lingrow — O salto de verdade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background:#0f0e0d; color:#e7e5e4; padding:40px 16px 80px; }
+  .head { text-align:center; max-width:780px; margin:0 auto 40px; }
+  .head h1 { font-size:26px; font-weight:800; margin-bottom:10px; }
+  .head p { color:#a8a29e; font-size:15px; line-height:1.55; }
+  .stage { display:flex; gap:44px; justify-content:center; flex-wrap:wrap; max-width:1100px; margin:0 auto; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .col-label { font-size:14px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+  .col-label.old { color:#a8a29e; }
+  .col-label.new { color:#a78bfa; }
+  .col-note { font-size:12px; color:#78716c; max-width:340px; text-align:center; line-height:1.5; }
+
+  .phone { width:360px; height:740px; border-radius:44px; padding:12px; background:#1c1917; box-shadow:0 30px 80px rgba(0,0,0,.55); }
+  .screen { width:100%; height:100%; border-radius:34px; overflow:hidden; display:flex; flex-direction:column; position:relative; background:var(--bg); }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:130px; height:26px; background:#1c1917; border-bottom-left-radius:16px; border-bottom-right-radius:16px; z-index:50; }
+  .content { flex:1; overflow-y:auto; padding:40px 18px 12px; display:flex; flex-direction:column; gap:18px; }
+  .content::-webkit-scrollbar { width:0; }
+  svg.i { width:1em; height:1em; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* ===== ATUAL (roxo refinado + emoji + fonte sistema) ===== */
+  .old {
+    --primary:#6D28D9; --bg:#FAF9F7; --surface:#FFFFFF;
+    --text:#1C1917; --muted:#78716C; --faint:#A8A29E;
+    --border:#E7E5E4; --borderSoft:#F1EFEE; --pSoft:#F3F0FF;
+    --infoSoft:#DBEAFE;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  .old .h1 { font-size:26px; font-weight:800; color:var(--primary); }
+  .old .sub { font-size:14px; color:var(--muted); margin-top:-12px; }
+  .old .cta { background:var(--primary); border-radius:16px; }
+  .old .deck-cover { background:#6D28D922; }
+
+  /* ===== COM PERSONALIDADE (fonte + ícones + identidade) ===== */
+  .new {
+    --primary:#6D28D9; --primary2:#8B5CF6; --bg:#FAF8FC; --surface:#FFFFFF;
+    --text:#1A1626; --muted:#6E6880; --faint:#A6A1B5;
+    --border:#ECE9F2; --borderSoft:#F4F2F8; --pSoft:#F1ECFE;
+    --infoSoft:#E8EDFF;
+    font-family:'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+  .new .h1 { font-size:15px; font-weight:600; color:var(--muted); letter-spacing:.2px; }
+  .new .brand { font-size:30px; font-weight:800; color:var(--text); letter-spacing:-.5px; margin-top:-14px; }
+  .new .sub { font-size:14px; color:var(--muted); margin-top:-12px; }
+  .new .cta { background:linear-gradient(135deg,var(--primary),var(--primary2)); border-radius:24px; box-shadow:0 14px 30px -8px rgba(109,40,217,.5); position:relative; overflow:hidden; }
+  .new .greet { font-size:26px; font-weight:800; color:var(--text); letter-spacing:-.3px; }
+  .cta-leaf { position:absolute; right:-12px; top:-14px; width:96px; height:96px; color:#fff; opacity:.13; }
+  .new .deck-cover { background:linear-gradient(135deg,#6D28D9,#8B5CF6); color:#fff; }
+  .new .card, .new .stat, .new .deckitem { border-radius:22px; }
+  .new .iw { border-radius:15px; }
+
+  /* shared */
+  .sub { font-size:14px; color:var(--muted); margin-top:-12px; }
+  .cta { padding:22px; text-align:center; color:#fff; display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .cta .badge-ic { width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .cta .t { font-size:20px; font-weight:800; }
+  .cta .s { font-size:13px; opacity:.9; }
+  .cta .btn { background:#fff; color:var(--primary); font-weight:700; font-size:14px; padding:11px 26px; border-radius:14px; margin-top:6px; }
+
+  .card { background:var(--surface); border-radius:18px; padding:18px; border:1px solid var(--borderSoft); box-shadow:0 8px 20px rgba(26,22,38,.05); display:flex; flex-direction:column; gap:11px; }
+  .card .row { display:flex; gap:13px; align-items:center; }
+  .card .cov { width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .card .name { font-size:15px; font-weight:700; color:var(--text); }
+  .card .desc { font-size:12px; color:var(--muted); margin-top:2px; }
+  .progress-row { display:flex; justify-content:space-between; font-size:12px; }
+  .progress-row .pl { color:var(--muted); } .progress-row .pp { color:var(--primary); font-weight:700; }
+  .bar { height:7px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .bar > i { display:block; height:100%; width:38%; background:var(--primary); border-radius:4px; }
+  .studybtn { background:var(--primary); color:#fff; text-align:center; font-weight:700; font-size:14px; padding:12px; border-radius:14px; }
+
+  .stats { display:flex; gap:12px; }
+  .stat { flex:1; background:var(--surface); border:1px solid var(--borderSoft); border-radius:18px; padding:18px; box-shadow:0 8px 20px rgba(26,22,38,.05); }
+  .iw { width:48px; height:48px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .num { font-size:30px; font-weight:800; color:var(--text); margin-top:10px; }
+  .lbl { font-size:12px; color:var(--muted); }
+
+  .review { background:var(--primary); border-radius:18px; padding:16px; display:flex; align-items:center; gap:14px; }
+  .new .review { background:linear-gradient(135deg,var(--primary),var(--primary2)); box-shadow:0 12px 26px -10px rgba(109,40,217,.5); }
+  .review .badge { width:44px; height:44px; border-radius:13px; background:rgba(255,255,255,.2); color:#fff; font-weight:800; font-size:17px; display:flex; align-items:center; justify-content:center; }
+  .review .rt { color:#fff; font-weight:700; font-size:15px; } .review .rs { color:rgba(255,255,255,.82); font-size:12px; }
+
+  .sec { display:flex; justify-content:space-between; align-items:center; }
+  .sec .st { font-size:19px; font-weight:800; color:var(--text); }
+  .sec .nb { background:var(--primary); color:#fff; font-size:12px; font-weight:700; padding:8px 13px; border-radius:11px; display:flex; align-items:center; gap:4px; }
+
+  .deckitem { background:var(--surface); border:1px solid var(--borderSoft); border-radius:18px; overflow:hidden; box-shadow:0 8px 20px rgba(26,22,38,.05); }
+  .deckitem .cover { height:80px; display:flex; align-items:center; justify-content:center; font-size:32px; }
+  .deckitem .body { padding:14px; } .deckitem .dn { font-size:15px; font-weight:700; color:var(--text); } .deckitem .dd { font-size:12px; color:var(--muted); margin-top:3px; }
+
+  .tabs { display:flex; background:var(--surface); border-top:1px solid var(--border); padding:11px 0 18px; }
+  .tab { flex:1; text-align:center; font-size:10px; font-weight:600; color:var(--faint); display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .tab .ti { font-size:21px; } .tab.active { color:var(--primary); }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <symbol id="leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 16-9 0 8-4 13-9 13Z"/><path d="M4 20c2-4 5-7 9-8"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></symbol>
+    <symbol id="cap" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></symbol>
+    <symbol id="bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3V9.5Z"/><path d="M9 21v-7h6v7"/></symbol>
+    <symbol id="refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.3 1a7 7 0 0 0-1.7-1l-.4-2.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.6a7 7 0 0 0 .1-1Z"/></symbol>
+    <symbol id="plusmini" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </svg>
+
+  <div class="head">
+    <h1>🌱 Lingrow — O salto de verdade</h1>
+    <p>À esquerda: o estado <b>atual</b> (roxo refinado, mas ainda com emojis e a fonte do sistema). À direita: a mesma tela com <b>fonte própria, ícones no lugar dos emojis e identidade mais forte</b>. Agora a diferença salta aos olhos.</p>
+  </div>
+
+  <div class="stage">
+    <!-- ATUAL -->
+    <div class="col">
+      <div class="col-label old">Atual — o que tá no app</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen old">
+          <div class="content">
+            <div class="h1">Bem-vindo ao Lingrow</div>
+            <div class="sub">Aprenda inglês com flashcards inteligentes</div>
+            <div class="cta">
+              <div class="badge-ic">🌱</div>
+              <div class="t">Estudar hoje</div>
+              <div class="s">Você tem 12 cards esperando.</div>
+              <div class="btn">Estudar agora</div>
+            </div>
+            <div class="card">
+              <div class="row"><div class="cov" style="background:var(--pSoft)">📚</div><div><div class="name">1000 Frases Essenciais</div><div class="desc">Inglês com frases reais do dia a dia.</div></div></div>
+              <div class="progress-row"><span class="pl">380 / 1000 frases</span><span class="pp">38%</span></div>
+              <div class="bar"><i></i></div>
+              <div class="studybtn">Estudar agora</div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="iw" style="background:var(--pSoft)">📖</div><div class="num">3</div><div class="lbl">Decks</div></div>
+              <div class="stat"><div class="iw" style="background:var(--infoSoft)">🎓</div><div class="num">24</div><div class="lbl">Cards</div></div>
+            </div>
+            <div class="review"><div class="badge">12</div><div><div class="rt">Para Revisar</div><div class="rs">Clique para estudar</div></div></div>
+            <div class="sec"><div class="st">Meus Decks</div><div class="nb">+ Novo Deck</div></div>
+            <div class="deckitem"><div class="cover deck-cover">📘</div><div class="body"><div class="dn">Vocabulário de Trabalho</div><div class="dd">Frases para reuniões e e-mails</div></div></div>
+          </div>
+          <div class="tabs">
+            <div class="tab active"><span class="ti">🏠</span>Início</div>
+            <div class="tab"><span class="ti">🔄</span>Revisar</div>
+            <div class="tab"><span class="ti">➕</span>Criar</div>
+            <div class="tab"><span class="ti">⚙️</span>Config</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-note">Emojis 🌱📚🎓 como ilustração + fonte do sistema = cara de protótipo genérico.</div>
+    </div>
+
+    <!-- COM PERSONALIDADE -->
+    <div class="col">
+      <div class="col-label new">Com personalidade — proposta</div>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen new">
+          <div class="content">
+            <div class="greet">Olá, Vitor 👋</div>
+            <div class="sub">Pronto pra mais um dia de inglês?</div>
+            <div class="cta">
+              <svg class="cta-leaf"><use href="#leaf"/></svg>
+              <div class="t">Estudar hoje</div>
+              <div class="s">Você tem 12 cards esperando.</div>
+              <div class="btn">Estudar agora</div>
+            </div>
+            <div class="card">
+              <div class="row"><div class="cov" style="background:var(--pSoft); color:var(--primary)"><svg class="i" style="width:24px;height:24px"><use href="#book"/></svg></div><div><div class="name">1000 Frases Essenciais</div><div class="desc">Inglês com frases reais do dia a dia.</div></div></div>
+              <div class="progress-row"><span class="pl">380 / 1000 frases</span><span class="pp">38%</span></div>
+              <div class="bar"><i></i></div>
+              <div class="studybtn">Estudar agora</div>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="iw" style="background:var(--pSoft); color:var(--primary)"><svg class="i" style="width:22px;height:22px"><use href="#book"/></svg></div><div class="num">3</div><div class="lbl">Decks</div></div>
+              <div class="stat"><div class="iw" style="background:var(--infoSoft); color:#2563EB"><svg class="i" style="width:22px;height:22px"><use href="#cap"/></svg></div><div class="num">24</div><div class="lbl">Cards</div></div>
+            </div>
+            <div class="review"><div class="badge"><svg class="i" style="width:20px;height:20px;color:#fff"><use href="#bolt"/></svg></div><div style="flex:1"><div class="rt">Para Revisar</div><div class="rs">12 cards esperando você</div></div><div style="color:rgba(255,255,255,.7);font-size:20px">›</div></div>
+            <div class="sec"><div class="st">Meus Decks</div><div class="nb"><svg class="i" style="width:13px;height:13px;color:#fff"><use href="#plusmini"/></svg> Novo Deck</div></div>
+            <div class="deckitem"><div class="cover deck-cover"><svg class="i" style="width:34px;height:34px;color:#fff"><use href="#book"/></svg></div><div class="body"><div class="dn">Vocabulário de Trabalho</div><div class="dd">Frases para reuniões e e-mails</div></div></div>
+          </div>
+          <div class="tabs">
+            <div class="tab active"><span class="ti"><svg class="i"><use href="#home"/></svg></span>Início</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#refresh"/></svg></span>Revisar</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#plus"/></svg></span>Criar</div>
+            <div class="tab"><span class="ti"><svg class="i"><use href="#gear"/></svg></span>Config</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-note">Fonte <b>Plus Jakarta Sans</b> + ícones de linha + gradiente na marca. Mesma estrutura, outra liga.</div>
+    </div>
+  </div>
+
+  <p style="text-align:center; color:#57534e; font-size:12px; margin-top:48px; max-width:680px; margin-left:auto; margin-right:auto; line-height:1.6;">
+    Esta versão "com personalidade" usa uma fonte do Google (Plus Jakarta Sans) e ícones de linha — exige instalar a fonte e os ícones no app e gerar um build novo. É o passo que dá o "uau". As cores seguem o mesmo design system.
+  </p>
+</body>
+</html>

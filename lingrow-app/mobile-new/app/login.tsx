@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Linking,
   Platform,
   StyleSheet,
@@ -12,9 +13,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
+import { colors, fonts } from '@/theme';
 
-const PRIMARY = '#7C3AED';
+const PRIMARY = colors.primary;
 
 function translateAuthError(msg: string): string {
   if (!msg) return 'Ocorreu um erro. Tente novamente.';
@@ -111,8 +115,18 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <Text style={styles.logo}>🌱</Text>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <LinearGradient
+          colors={[colors.primary, colors.primaryLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.logoWrap}
+        >
+          <Ionicons name="leaf" size={40} color={colors.onPrimary} />
+        </LinearGradient>
         <Text style={styles.title}>Lingrow</Text>
         <Text style={styles.sub}>Aprenda inglês com flashcards inteligentes</Text>
 
@@ -143,7 +157,7 @@ export default function LoginScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
         <TextInput
           style={styles.input}
@@ -151,12 +165,12 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textFaint}
         />
 
         <TouchableOpacity style={styles.primaryBtn} onPress={handleEmail} disabled={loading}>
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.primaryBtnText}>{isSignUp ? 'Criar conta' : 'Entrar'}</Text>
           )}
@@ -174,39 +188,39 @@ export default function LoginScreen() {
             <Text style={styles.privacyLink}>Política de Privacidade</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, padding: 24, justifyContent: 'center', gap: 12 },
-  logo: { fontSize: 64, textAlign: 'center' },
-  title: { fontSize: 32, fontWeight: '800', color: PRIMARY, textAlign: 'center' },
-  sub: { fontSize: 15, color: '#6B7280', textAlign: 'center', marginBottom: 8 },
+  logoWrap: { width: 88, height: 88, borderRadius: 28, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', shadowColor: PRIMARY, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  title: { fontSize: 32, fontFamily: fonts.extrabold, color: PRIMARY, textAlign: 'center' },
+  sub: { fontSize: 15, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
   appleBtn: {
     height: 52,
     borderRadius: 14,
   },
   googleBtn: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  googleBtnText: { fontSize: 16, fontWeight: '600', color: '#111827' },
+  googleBtnText: { fontSize: 16, fontFamily: fonts.semibold, color: colors.text },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E5E7EB' },
-  dividerText: { fontSize: 13, color: '#9CA3AF' },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  dividerText: { fontSize: 13, color: colors.textFaint },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: '#111827',
+    color: colors.text,
   },
   primaryBtn: {
     backgroundColor: PRIMARY,
@@ -214,10 +228,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  primaryBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 16 },
   toggleBtn: { alignItems: 'center', marginTop: 4 },
-  toggleText: { color: PRIMARY, fontWeight: '600', fontSize: 14 },
+  toggleText: { color: PRIMARY, fontFamily: fonts.semibold, fontSize: 14 },
   privacyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: 8 },
-  privacyText: { color: '#9CA3AF', fontSize: 12 },
-  privacyLink: { color: '#9CA3AF', fontSize: 12, textDecorationLine: 'underline' },
+  privacyText: { color: colors.textFaint, fontSize: 12 },
+  privacyLink: { color: colors.textFaint, fontSize: 12, textDecorationLine: 'underline' },
 });
