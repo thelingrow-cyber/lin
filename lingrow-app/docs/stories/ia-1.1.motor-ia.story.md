@@ -41,8 +41,8 @@
 
 ## Tasks
 
-- [ ] T1 (@dev): Snapshot do schema + aplicar migração 004 (`supabase db push`) + verificar objetos criados — ⚠️ BLOQUEADO: CLI não instalado/linkado (ver Dev Agent Record)
-- [ ] T2 (@dev): Configurar secrets: `ANTHROPIC_API_KEY`, `AI_MODEL_ID=claude-haiku-4-5` (⚠️ pedir a key ao fundador — nunca commitar)
+- [x] T1 (@dev): Migração 004 aplicada em produção via `supabase db push` (CLI instalado via npx, projeto linkado, histórico 001-003 reparado antes — ver Dev Agent Record)
+- [ ] T2 (@dev): Secrets — `AI_MODEL_ID=claude-haiku-4-5` ✅ configurado; `ANTHROPIC_API_KEY` ⏳ aguardando o fundador (decisão: subir depois)
 - [x] T3 (@dev): Implementar `supabase/functions/generate-cards/index.ts` (fluxo: JWT → flag → input → tier → quota → Claude (tool use/JSON schema) → validar → record_ai_cards → 200; falha → refund → 502)
 - [x] T4 (@dev): Implementar `lib/ai.ts` (tipos + `generateCards()` + mapeamento de erros)
 - [ ] T5 (@dev): Testar os 6 cenários de resposta e registrar evidência no story (depende de T1+T2)
@@ -86,11 +86,25 @@
 - T4 ✅ `mobile-new/lib/ai.ts` — `generateCards()` tipado, `AiError` com códigos (`quota_exceeded`, `feature_disabled`, `too_many_requests`, `generation_failed`, `network`, ...), `usage`/`retryAfterSeconds` propagados, + `getAiUsage()` p/ exibir quota (leitura via RLS). Nenhum arquivo existente modificado (AC9).
 - Typecheck: apenas os 2 erros pré-existentes do projeto (expo-web-browser, context/auth.tsx) — `lib/ai.ts` adiciona zero erros (AC11 parcial ok).
 
-### Debug Log / Bloqueios
+### Debug Log / Execução T1+deploy (2026-06-11)
 
-- **T1 bloqueado:** Supabase CLI não instalado e projeto não linkado (`supabase/config.toml` ausente). Migrações 001-003 aparentam ter sido aplicadas via Dashboard. Caminho proposto: `npx supabase login` (interativo, fundador) → `npx supabase link --project-ref ireppvpjhtapnekmucam` → `npx supabase db push`. Alternativa: colar a 004 no SQL Editor do Dashboard.
-- **T2 bloqueado:** aguarda `ANTHROPIC_API_KEY` do fundador (console.anthropic.com). Depois: `npx supabase secrets set` + `npx supabase functions deploy generate-cards`.
-- **T5:** sem Docker p/ `functions serve` local — plano: testar contra a função deployada (flag `ai_enabled` começa `false`; ligar temporariamente p/ cenários 200/429/502 antes do beta, função sem UI = sem exposição a usuários).
+1. CLI via `npx supabase` (v2.106.0) + token de acesso do fundador (`supabase init` + `link --project-ref ireppvpjhtapnekmucam`).
+2. ⚠️ Dry-run revelou que o CLI queria aplicar 001-004 (001-003 foram aplicadas via Dashboard, fora do rastreador). Corrigido com `migration repair --status applied 001 002 003` ANTES do push — evitou falha em produção (policies/triggers duplicados).
+3. `db push` → 004 aplicada com sucesso (NOTICEs benignos de DROP POLICY IF EXISTS). `migration list`: 001-004 sincronizadas Local|Remote.
+4. Snapshot pg_dump indisponível (Docker Desktop parado) — mitigação: migração 100% aditiva + rollback script pronto em `supabase/rollbacks/`.
+5. Deploy: `functions deploy generate-cards` via API (sem Docker) → função no ar.
+6. Secret `AI_MODEL_ID=claude-haiku-4-5` configurado. `ANTHROPIC_API_KEY` pendente (decisão do fundador: depois).
+
+### Evidência de testes (T5 — 3/6 cenários verificados em produção)
+
+| Cenário | Esperado | Resultado |
+|---------|----------|-----------|
+| POST sem JWT | 401 | ✅ `401` (gateway) |
+| POST com anon key (não-usuário) | 401 | ✅ `{"error":"unauthenticated"}` |
+| POST com JWT real + flag off | 403 | ✅ `{"error":"feature_disabled"}` — prova migração + kill switch server-side funcionando |
+| 422 / 429 / 200 / 502 | — | ⏳ exigem flag on (+ key p/ 200/502) — executar quando a ANTHROPIC_API_KEY chegar |
+
+- Usuário QA criado p/ teste: `qa.ia.test.lingrow@gmail.com` (reutilizável nos testes restantes; remover antes do lançamento).
 
 ## Change Log
 
