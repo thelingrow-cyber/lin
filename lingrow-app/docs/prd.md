@@ -3,6 +3,7 @@
 | Data | Versão | Descrição | Autor |
 |------|--------|-----------|-------|
 | 2026-05-17 | 1.0 | Versão inicial — pré-lançamento beta | @pm (Morgan) + Fundador |
+| 2026-06-11 | 1.1 | Detalhamento da feature de IA (Criar Cards com IA) na v2 | @pm (Morgan) + Fundador |
 
 ---
 
@@ -172,6 +173,26 @@ Entregáveis:
 - Sistema de turmas com controle de permissões (professor / aluno)
 - Paywall e gestão de assinatura (RevenueCat ou Stripe)
 - B2B: plano institucional para escolas e cursinhos
+
+#### Feature âncora: Criar Cards com IA
+
+> Documento de conceito completo: `docs/features/ai-deck-creator.md` (idealização concluída 2026-06-11)
+
+**Conceito:** um motor único (`tema + quantidade → cards`) exposto em dois pontos de entrada — não são features separadas:
+- **Caminho A — "Criar deck com IA":** na home, ao lado de "Novo Deck". O usuário descreve um tema e a IA gera um deck novo pronto. É o momento "uau" que justifica o premium.
+- **Caminho B — "Gerar mais cards":** dentro de um deck existente. A IA completa o deck que o usuário já começou. Fideliza.
+
+**Princípios de produto fechados:**
+- **UX mínima, fiel à marca:** tela de entrada com campo de texto + chips-atalho (Viagem, Trabalho, etc.) + botão Gerar. Sem formulário. Entrada por voz via teclado nativo.
+- **Tela de revisão obrigatória:** a IA gera, o usuário apaga/edita/aprova antes de salvar. Protege a qualidade do estudo.
+- **Limites de custo desde o dia 1:** teto por geração (~20 cards) e teto mensal por usuário (~20 gerações/mês), calibráveis.
+- **Nível de dificuldade** absorvido pelo texto livre ou ajustado na revisão ("mais fácil / mais difícil") — não polui a entrada. Não altera o SRS.
+- **Segurança:** chamada via Supabase Edge Function, chave de API nunca no cliente.
+- **Formato dos cards** idêntico ao deck 1000 (frente EN + verso PT + nota); áudio via TTS nativo já existente.
+
+**Pendências técnicas (para @architect):** definição do modelo de IA e custo por geração, estrutura da Edge Function com rate limiting e contagem de quota por usuário.
+
+**Decisão de go-to-market (2026-06-11):** construir a feature de IA **e** o paywall antes de submeter à Apple (lançamento completo). Modelo de monetização: **freemium em camadas** — IA restrita no grátis (2-3 gerações/mês, isca de conversão), generosa no premium (20/mês), com **trial de 7 dias** do premium. Preço a definir após custo da IA. Alertas a resolver antes de executar: (1) pagamento iOS via In-App Purchase / RevenueCat — não usar checkout externo, sob pena de rejeição; (2) confirmar custo real da IA vs preço antes de ligar a cobrança — risco maior no volume do grátis. Ver `docs/features/ai-deck-creator.md` §8 e §13.
 
 ---
 
