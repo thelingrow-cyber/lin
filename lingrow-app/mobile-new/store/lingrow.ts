@@ -209,9 +209,10 @@ export async function saveCards(cards: Card[]): Promise<void> {
     audio_url: card.audioUrl ?? null,
     position: card.position,
   }));
-  // inserir em lotes de 100
+  // inserir em lotes de 100 — falha de qualquer lote interrompe e propaga
   for (let i = 0; i < rows.length; i += 100) {
-    await supabase.from('cards').upsert(rows.slice(i, i + 100), { onConflict: 'id' });
+    const { error } = await supabase.from('cards').upsert(rows.slice(i, i + 100), { onConflict: 'id' });
+    if (error) throw error;
   }
 }
 

@@ -123,6 +123,42 @@ export async function generateCards(params: GenerateCardsParams): Promise<Genera
 }
 
 /**
+ * Kill switch remoto: a feature de IA só aparece com `ai_enabled = 'true'`.
+ * Em qualquer falha de leitura, assume DESLIGADA (estado seguro).
+ */
+export async function isAiEnabled(): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('app_config')
+      .select('value')
+      .eq('key', 'ai_enabled')
+      .maybeSingle();
+    return data?.value === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/** Limites de exibição (o servidor é a autoridade — isto é só p/ UI). */
+export const AI_DISPLAY_LIMITS = { free: 3, premium: 20 } as const;
+
+/**
+ * Tier do usuário p/ exibição da quota (premium ativo e não expirado).
+ */
+export async function isPremiumUser(): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('user_settings')
+      .select('is_premium, premium_expires_at')
+      .maybeSingle();
+    if (!data?.is_premium) return false;
+    return data.premium_expires_at == null || new Date(data.premium_expires_at) > new Date();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Lê o uso de IA do mês corrente direto da tabela (RLS: leitura própria).
  * P/ exibir "✨ X gerações restantes" sem chamar a função.
  */

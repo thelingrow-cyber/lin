@@ -52,6 +52,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="study/[deckId]" options={{ headerShown: false }} />
         <Stack.Screen name="deck/[deckId]" options={{ headerShown: false }} />
+        <Stack.Screen name="ai-create" options={{ headerShown: false }} />
         <Stack.Screen name="session-done" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />

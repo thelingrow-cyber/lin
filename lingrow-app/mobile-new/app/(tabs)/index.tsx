@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -31,6 +31,7 @@ import {
 } from '@/store/lingrow';
 import { DECK_1000, SENTENCES } from '@/data/sentences';
 import { Analytics } from '@/lib/analytics';
+import { isAiEnabled } from '@/lib/ai';
 import { colors, fonts } from '@/theme';
 
 const PRIMARY = colors.primary;
@@ -49,6 +50,7 @@ export default function HomeScreen() {
   const [showBetaWelcome, setShowBetaWelcome] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(false);
   const [newDeckName, setNewDeckName] = useState('');
   const [newDeckDesc, setNewDeckDesc] = useState('');
   const [newDeckColor, setNewDeckColor] = useState(PRIMARY);
@@ -66,6 +68,9 @@ export default function HomeScreen() {
     try {
       const betaDone = await AsyncStorage.getItem(BETA_WELCOME_KEY);
       if (!betaDone) setShowBetaWelcome(true);
+
+      // kill switch remoto da IA — falha ⇒ botão oculto (estado seguro)
+      void isAiEnabled().then(setAiEnabled);
 
       // fase 1: settings + decks + progresso em paralelo
       const [s, allDecks, cards, allProgress] = await Promise.all([
@@ -273,10 +278,26 @@ export default function HomeScreen() {
         {/* meus decks */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Meus Decks</Text>
-          <TouchableOpacity style={styles.newDeckBtn} onPress={() => setShowNewDeckModal(true)}>
-            <Ionicons name="add" size={14} color={colors.surface} />
-            <Text style={styles.newDeckBtnText}>Novo Deck</Text>
-          </TouchableOpacity>
+          <View style={styles.deckBtnRow}>
+            {aiEnabled && (
+              // rota nova — tipo gerado só no próximo `expo start`, daí o cast
+              <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ai-create' as Href)}>
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.aiDeckBtn}
+                >
+                  <Ionicons name="sparkles" size={13} color={colors.surface} />
+                  <Text style={styles.newDeckBtnText}>Criar com IA</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.newDeckBtn} onPress={() => setShowNewDeckModal(true)}>
+              <Ionicons name="add" size={14} color={colors.surface} />
+              <Text style={styles.newDeckBtnText}>Novo Deck</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {decks.map((deck) => (
@@ -447,6 +468,8 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   sectionTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.text },
   newDeckBtn: { flexDirection: 'row', backgroundColor: PRIMARY, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, gap: 4, alignItems: 'center' },
+  deckBtnRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  aiDeckBtn: { flexDirection: 'row', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, gap: 4, alignItems: 'center' },
   newDeckBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 13 },
   deckItem: { backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: colors.borderSoft },
   deckItemCover: { height: 90, alignItems: 'center', justifyContent: 'center' },
