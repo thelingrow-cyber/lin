@@ -210,8 +210,8 @@ export default function HomeScreen() {
               <View style={styles.ctaIconWrap}>
                 <Ionicons name="leaf" size={26} color={colors.onPrimary} />
               </View>
-              <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : 'Comece agora!'}</Text>
-              <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Suas primeiras frases estão esperando por você.'}</Text>
+              <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : '1000 Frases Essenciais'}</Text>
+              <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Seu inglês começa aqui.'}</Text>
               <View style={styles.ctaBtn}>
                 <Text style={styles.ctaBtnText}>Estudar agora</Text>
               </View>
@@ -219,8 +219,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* deck with progress */}
-        {learnedCount > 0 && (
+        {/* deck with progress — sempre visível: o programa é a promessa central do app */}
+        {(
           <TouchableOpacity style={styles.deckCard} onPress={() => router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })} activeOpacity={0.85}>
             <View style={styles.deckCardRow}>
               <View style={styles.deckCardIconWrap}>
