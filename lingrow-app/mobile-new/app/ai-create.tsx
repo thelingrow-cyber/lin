@@ -514,7 +514,7 @@ export default function AiCreateScreen() {
                     style={[styles.countChip, active && styles.chipActive, locked && styles.countChipLocked]}
                     onPress={() => {
                       if (locked) {
-                        Alert.alert('Lingrow Premium ✨', `Gere até ${AI_CARD_LIMITS.premium} cards de uma vez no Premium. Em breve!`);
+                        Alert.alert('Em breve 🌱', `Gere até ${AI_CARD_LIMITS.premium} cards de uma vez. Plano Premium chegando em breve!`);
                         return;
                       }
                       setCount(n);

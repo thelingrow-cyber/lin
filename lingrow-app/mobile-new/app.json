@@ -2,7 +2,7 @@
   "expo": {
     "name": "Lingrow",
     "slug": "lingrow",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lingrow",
@@ -16,6 +16,7 @@
       }
     },
     "android": {
+      "package": "com.lingrow.flashcards",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
