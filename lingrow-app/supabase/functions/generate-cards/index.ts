@@ -190,12 +190,13 @@ async function callClaude(
 
   if (cards.length === 0) throw new Error('anthropic_malformed_output');
 
+  // (nome local difere do parâmetro `deckName` — redeclarar seria SyntaxError)
   const rawName = toolUse?.input?.deckName;
-  const deckName = typeof rawName === 'string' && rawName.trim() !== ''
+  const suggestedName = typeof rawName === 'string' && rawName.trim() !== ''
     ? rawName.trim().slice(0, 30)
     : undefined;
 
-  return { cards, deckName };
+  return { cards, deckName: suggestedName };
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
