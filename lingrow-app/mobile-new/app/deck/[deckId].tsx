@@ -1,10 +1,12 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams, type Href } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { getDecks, getCards, getAllProgress, getSettings, getStudySession, Deck } from '@/store/lingrow';
+import { isAiEnabled } from '@/lib/ai';
 import { colors, fonts } from '@/theme';
 
 const PRIMARY = colors.primary;
@@ -16,9 +18,13 @@ export default function DeckScreen() {
   const [learnedCount, setLearnedCount] = useState(0);
   const [dailyGoal, setDailyGoal] = useState(5);
   const [availableCount, setAvailableCount] = useState(0);
+  const [aiEnabled, setAiEnabled] = useState(false);
 
-  useEffect(() => {
+  // useFocusEffect: recarrega ao voltar (ex.: depois de adicionar cards via IA)
+  useFocusEffect(useCallback(() => {
     (async () => {
+      void isAiEnabled().then(setAiEnabled);
+
       const decks = await getDecks();
       const found = decks.find((d) => d.id === deckId);
       if (found) setDeck(found);
@@ -37,7 +43,7 @@ export default function DeckScreen() {
       const session = await getStudySession(deckId);
       setAvailableCount(session.length);
     })();
-  }, [deckId]);
+  }, [deckId]));
 
   if (!deck) return null;
 
@@ -75,6 +81,38 @@ export default function DeckScreen() {
             <Text style={styles.studyBtnText}>Estudar agora</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ações do deck — só para decks do usuário (built-in tem conteúdo fixo) */}
+        {deckId !== 'deck-1000-frases' && (
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => router.push({ pathname: '/(tabs)/criar', params: { deckId } } as Href)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+              <Text style={styles.actionBtnText}>Adicionar card</Text>
+            </TouchableOpacity>
+
+            {aiEnabled && (
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={() => router.push({ pathname: '/ai-create', params: { deckId, deckName: deck.name } } as Href)}
+                activeOpacity={0.9}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryLight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.actionBtnAi}
+                >
+                  <Ionicons name="sparkles" size={18} color={colors.surface} />
+                  <Text style={styles.actionBtnAiText}>Gerar com IA</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -97,4 +135,9 @@ const styles = StyleSheet.create({
   deckInfo: { fontSize: 13, color: colors.textMuted },
   studyBtn: { backgroundColor: PRIMARY, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
   studyBtnText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 15 },
+  actionsRow: { flexDirection: 'row', gap: 12 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderColor: PRIMARY, borderRadius: 12, paddingVertical: 13, backgroundColor: colors.surface },
+  actionBtnText: { color: PRIMARY, fontFamily: fonts.bold, fontSize: 14 },
+  actionBtnAi: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, paddingVertical: 14 },
+  actionBtnAiText: { color: colors.surface, fontFamily: fonts.bold, fontSize: 14 },
 });

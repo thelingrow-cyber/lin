@@ -32,6 +32,8 @@ export interface GenerateCardsParams {
 
 export interface GenerateCardsResult {
   cards: AiCardDraft[];
+  /** Nome de deck sugerido pela IA (Caminho A) — usuário pode editar. */
+  deckName?: string;
   usage: AiUsage;
 }
 
@@ -119,7 +121,11 @@ export async function generateCards(params: GenerateCardsParams): Promise<Genera
     throw new AiError('unknown', 'Resposta inesperada do servidor.');
   }
 
-  return { cards, usage };
+  const deckName = typeof data?.deckName === 'string' && data.deckName.trim() !== ''
+    ? data.deckName.trim()
+    : undefined;
+
+  return { cards, deckName, usage };
 }
 
 /**
@@ -140,7 +146,8 @@ export async function isAiEnabled(): Promise<boolean> {
 }
 
 /** Limites de exibição (o servidor é a autoridade — isto é só p/ UI). */
-export const AI_DISPLAY_LIMITS = { free: 3, premium: 20 } as const;
+export const AI_DISPLAY_LIMITS = { free: 3, premium: 20 } as const; // gerações/mês
+export const AI_CARD_LIMITS = { free: 5, premium: 20 } as const; // cards por geração
 
 /**
  * Tier do usuário p/ exibição da quota (premium ativo e não expirado).

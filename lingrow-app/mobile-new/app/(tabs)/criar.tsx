@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
@@ -20,6 +20,8 @@ import { colors, fonts } from '@/theme';
 const PRIMARY = colors.primary;
 
 export default function CriarScreen() {
+  // deck pré-selecionado ao chegar de "Adicionar card" na tela do deck
+  const { deckId: paramDeckId } = useLocalSearchParams<{ deckId?: string }>();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [selectedDeck, setSelectedDeck] = useState<Deck | null>(null);
   const [front, setFront] = useState('');
@@ -30,12 +32,16 @@ export default function CriarScreen() {
 
   const load = useCallback(async () => {
     const all = await getDecks();
-    setDecks(all.filter((d) => d.id !== 'deck-1000-frases'));
-    if (!selectedDeck) {
-      const manual = all.find((d) => d.id !== 'deck-1000-frases');
-      if (manual) setSelectedDeck(manual);
+    const manuais = all.filter((d) => d.id !== 'deck-1000-frases');
+    setDecks(manuais);
+    // prioridade: deck vindo por parâmetro > seleção atual > primeiro da lista
+    const fromParam = paramDeckId ? manuais.find((d) => d.id === paramDeckId) : undefined;
+    if (fromParam) {
+      setSelectedDeck(fromParam);
+    } else if (!selectedDeck && manuais.length > 0) {
+      setSelectedDeck(manuais[0]);
     }
-  }, []);
+  }, [paramDeckId]);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 

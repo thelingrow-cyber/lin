@@ -5,7 +5,7 @@
 // até o usuário aprovar na revisão (saveDeck + saveCards).
 // ============================================================
 
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,13 +26,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import {
   AiCardDraft,
   AiError,
+  AiLevel,
   AiUsage,
   AI_DISPLAY_LIMITS,
+  AI_CARD_LIMITS,
   generateCards,
   getAiUsage,
   isPremiumUser,
 } from '@/lib/ai';
-import { saveCards, saveDeck, Card, Deck } from '@/store/lingrow';
+import { getCards, saveCards, saveDeck, Card, Deck } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
 import { colors, fonts, radius, shadow, spacing } from '@/theme';
 
@@ -47,12 +49,29 @@ const CHIPS: { emoji: string; label: string; theme: string }[] = [
 
 type Phase = 'input' | 'generating' | 'review';
 
+const COUNT_OPTIONS = [5, 10, 15, 20];
+const LEVELS: AiLevel[] = ['basic', 'intermediate', 'advanced'];
+const LEVEL_LABELS: Record<AiLevel, string> = {
+  basic: 'Básico',
+  intermediate: 'Intermediário',
+  advanced: 'Avançado',
+};
+
 export default function AiCreateScreen() {
+  // Caminho B: chegando de dentro de um deck existente
+  const params = useLocalSearchParams<{ deckId?: string; deckName?: string }>();
+  const targetDeckId = typeof params.deckId === 'string' && params.deckId !== '' ? params.deckId : null;
+  const targetDeckName = typeof params.deckName === 'string' ? params.deckName : '';
+
   const [phase, setPhase] = useState<Phase>('input');
-  const [theme, setTheme] = useState('');
+  const [theme, setTheme] = useState(targetDeckId ? targetDeckName : '');
   const [usage, setUsage] = useState<AiUsage | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
+  const [count, setCount] = useState(5);
+  const [level, setLevel] = useState<AiLevel>('intermediate');
+  const [sampleFronts, setSampleFronts] = useState<string[]>([]);
 
   // revisão
   const [drafts, setDrafts] = useState<AiCardDraft[]>([]);
@@ -68,6 +87,7 @@ export default function AiCreateScreen() {
     (async () => {
       try {
         const premium = await isPremiumUser();
+        setIsPremium(premium);
         const limit = premium ? AI_DISPLAY_LIMITS.premium : AI_DISPLAY_LIMITS.free;
         setUsage(await getAiUsage(limit));
       } catch {
@@ -75,6 +95,21 @@ export default function AiCreateScreen() {
       }
     })();
   }, []);
+
+  // Caminho B: amostra de frases do deck p/ a IA gerar cards coerentes
+  useEffect(() => {
+    if (!targetDeckId) return;
+    (async () => {
+      try {
+        const existing = await getCards(targetDeckId);
+        setSampleFronts(existing.slice(0, 5).map((c) => c.front));
+      } catch {
+        // sem amostra — IA gera só pelo tema
+      }
+    })();
+  }, [targetDeckId]);
+
+  const maxCards = isPremium ? AI_CARD_LIMITS.premium : AI_CARD_LIMITS.free;
 
   // contagem regressiva do anti-burst
   useEffect(() => {
@@ -90,19 +125,31 @@ export default function AiCreateScreen() {
 
   const remaining = usage ? Math.max(0, usage.limit - usage.used) : null;
 
-  const generate = useCallback(async () => {
+  const generate = useCallback(async (overrideLevel?: AiLevel) => {
     const t = theme.trim();
     if (t.length === 0) {
       setErrorMsg('Digite um tema ou toque em uma das sugestões.');
       return;
     }
+    const lvl = overrideLevel ?? level;
     setErrorMsg(null);
     setPhase('generating');
     try {
-      const result = await generateCards({ theme: t });
+      const result = await generateCards({
+        theme: t,
+        count: Math.min(count, maxCards),
+        level: lvl,
+        deckContext: targetDeckId
+          ? { name: targetDeckName || t, sampleFronts }
+          : undefined,
+      });
       setDrafts(result.cards);
       setUsage(result.usage);
-      setDeckName(t.charAt(0).toUpperCase() + t.slice(1));
+      setLevel(lvl);
+      // nome sugerido pela IA > capitalização crua do tema
+      if (!targetDeckId) {
+        setDeckName(result.deckName ?? t.charAt(0).toUpperCase() + t.slice(1));
+      }
       setFlipped(new Set());
       setEditingIndex(null);
       setPhase('review');
@@ -136,7 +183,22 @@ export default function AiCreateScreen() {
       }
       setErrorMsg('Algo deu errado. Tente novamente em instantes.');
     }
-  }, [theme]);
+  }, [theme, count, level, maxCards, targetDeckId, targetDeckName, sampleFronts]);
+
+  // regenera no nível vizinho — consome 1 geração da cota (custo real de IA)
+  const regenerateAtLevel = (direction: 1 | -1) => {
+    const idx = LEVELS.indexOf(level) + direction;
+    if (idx < 0 || idx >= LEVELS.length) return;
+    const nextLevel = LEVELS[idx];
+    Alert.alert(
+      direction > 0 ? 'Deixar mais difícil?' : 'Deixar mais fácil?',
+      `A IA vai gerar os cards de novo no nível ${LEVEL_LABELS[nextLevel]}. Isso usa 1 geração da sua cota mensal.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Regenerar', onPress: () => void generate(nextLevel) },
+      ],
+    );
+  };
 
   const toggleFlip = (i: number) => {
     setFlipped((prev) => {
@@ -168,13 +230,40 @@ export default function AiCreateScreen() {
   };
 
   const save = async () => {
+    setSaving(true);
+    const ts = Date.now();
+
+    // Caminho B: adiciona os cards ao deck existente, sem criar deck novo
+    if (targetDeckId) {
+      const cards: Card[] = drafts.map((d, i) => ({
+        id: `card-ai-${ts}-${i}`,
+        deckId: targetDeckId,
+        front: d.front,
+        back: d.back,
+        keyword: d.keyword,
+        keywordPt: d.keywordPt,
+        notes: d.notes,
+        position: ts + i,
+      }));
+      try {
+        await saveCards(cards);
+        Alert.alert('Cards adicionados ✨', `${cards.length} cards novos no deck "${targetDeckName}".`);
+        router.back();
+      } catch (e: any) {
+        Alert.alert('Erro ao salvar', e?.message ?? 'Não foi possível salvar. Tente novamente.');
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Caminho A: deck novo
     const name = deckName.trim();
     if (!name) {
       Alert.alert('Atenção', 'Dê um nome ao seu deck.');
+      setSaving(false);
       return;
     }
-    setSaving(true);
-    const ts = Date.now();
     const deck: Deck = {
       id: `deck-ai-${ts}`,
       name,
@@ -232,22 +321,47 @@ export default function AiCreateScreen() {
             <TouchableOpacity onPress={discard} style={styles.backBtn}>
               <Ionicons name="arrow-back" size={22} color={colors.primary} />
             </TouchableOpacity>
-            <Text style={styles.title}>Revise seu deck</Text>
+            <Text style={styles.title}>{targetDeckId ? 'Revise os cards novos' : 'Revise seu deck'}</Text>
             <Text style={styles.sub}>
               {drafts.length} card{drafts.length !== 1 ? 's' : ''} gerado{drafts.length !== 1 ? 's' : ''} · toque para virar, edite ou exclua
             </Text>
 
-            <View style={styles.card}>
-              <Text style={styles.fieldLabel}>Nome do deck</Text>
-              <TextInput
-                style={styles.input}
-                value={deckName}
-                onChangeText={setDeckName}
-                maxLength={60}
-                placeholder="Nome do deck"
-                placeholderTextColor={colors.textFaint}
-              />
+            {/* nível: regenerar mais fácil/difícil (consome 1 geração) */}
+            <View style={styles.levelRow}>
+              <TouchableOpacity
+                style={[styles.levelBtn, level === 'basic' && styles.levelBtnDisabled]}
+                disabled={level === 'basic'}
+                onPress={() => regenerateAtLevel(-1)}
+              >
+                <Ionicons name="arrow-down" size={14} color={level === 'basic' ? colors.textFaint : colors.primary} />
+                <Text style={[styles.levelBtnText, level === 'basic' && { color: colors.textFaint }]}>Mais fácil</Text>
+              </TouchableOpacity>
+              <View style={styles.levelBadge}>
+                <Text style={styles.levelBadgeText}>{LEVEL_LABELS[level]}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.levelBtn, level === 'advanced' && styles.levelBtnDisabled]}
+                disabled={level === 'advanced'}
+                onPress={() => regenerateAtLevel(1)}
+              >
+                <Ionicons name="arrow-up" size={14} color={level === 'advanced' ? colors.textFaint : colors.primary} />
+                <Text style={[styles.levelBtnText, level === 'advanced' && { color: colors.textFaint }]}>Mais difícil</Text>
+              </TouchableOpacity>
             </View>
+
+            {!targetDeckId && (
+              <View style={styles.card}>
+                <Text style={styles.fieldLabel}>Nome do deck</Text>
+                <TextInput
+                  style={styles.input}
+                  value={deckName}
+                  onChangeText={setDeckName}
+                  maxLength={60}
+                  placeholder="Nome do deck"
+                  placeholderTextColor={colors.textFaint}
+                />
+              </View>
+            )}
 
             {drafts.map((d, i) => {
               const isFlipped = flipped.has(i);
@@ -314,7 +428,11 @@ export default function AiCreateScreen() {
               >
                 <Ionicons name="checkmark-circle" size={20} color={colors.onPrimary} />
                 <Text style={styles.generateBtnText}>
-                  {saving ? 'Salvando…' : `Salvar deck (${drafts.length} card${drafts.length !== 1 ? 's' : ''})`}
+                  {saving
+                    ? 'Salvando…'
+                    : targetDeckId
+                      ? `Adicionar ao deck (${drafts.length} card${drafts.length !== 1 ? 's' : ''})`
+                      : `Salvar deck (${drafts.length} card${drafts.length !== 1 ? 's' : ''})`}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -341,8 +459,12 @@ export default function AiCreateScreen() {
           <View style={styles.heroIconWrap}>
             <Ionicons name="sparkles" size={26} color={colors.primary} />
           </View>
-          <Text style={styles.title}>Criar deck com IA</Text>
-          <Text style={styles.sub}>Descreva um tema e a IA monta seu deck — você revisa tudo antes de salvar.</Text>
+          <Text style={styles.title}>{targetDeckId ? 'Gerar mais cards' : 'Criar deck com IA'}</Text>
+          <Text style={styles.sub}>
+            {targetDeckId
+              ? `A IA gera cards novos para "${targetDeckName}", no estilo dos que já existem — você revisa antes de adicionar.`
+              : 'Descreva um tema e a IA monta seu deck — você revisa tudo antes de salvar.'}
+          </Text>
 
           <View style={styles.card}>
             <Text style={styles.fieldLabel}>Qual o tema?</Text>
@@ -360,21 +482,51 @@ export default function AiCreateScreen() {
             />
             <Text style={styles.charCount}>{theme.length}/{THEME_MAX}</Text>
 
-            <Text style={[styles.fieldLabel, { marginTop: spacing.sm }]}>Ou comece por um atalho</Text>
+            {!targetDeckId && (
+              <>
+                <Text style={[styles.fieldLabel, { marginTop: spacing.sm }]}>Ou comece por um atalho</Text>
+                <View style={styles.chipsWrap}>
+                  {CHIPS.map((c) => (
+                    <TouchableOpacity
+                      key={c.label}
+                      style={[styles.chip, theme === c.theme && styles.chipActive]}
+                      onPress={() => {
+                        setTheme(c.theme);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
+                    >
+                      <Text style={styles.chipEmoji}>{c.emoji}</Text>
+                      <Text style={[styles.chipText, theme === c.theme && styles.chipTextActive]}>{c.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
+            <Text style={[styles.fieldLabel, { marginTop: spacing.sm }]}>Quantos cards?</Text>
             <View style={styles.chipsWrap}>
-              {CHIPS.map((c) => (
-                <TouchableOpacity
-                  key={c.label}
-                  style={[styles.chip, theme === c.theme && styles.chipActive]}
-                  onPress={() => {
-                    setTheme(c.theme);
-                    if (errorMsg) setErrorMsg(null);
-                  }}
-                >
-                  <Text style={styles.chipEmoji}>{c.emoji}</Text>
-                  <Text style={[styles.chipText, theme === c.theme && styles.chipTextActive]}>{c.label}</Text>
-                </TouchableOpacity>
-              ))}
+              {COUNT_OPTIONS.map((n) => {
+                const locked = n > maxCards;
+                const active = count === n && !locked;
+                return (
+                  <TouchableOpacity
+                    key={n}
+                    style={[styles.countChip, active && styles.chipActive, locked && styles.countChipLocked]}
+                    onPress={() => {
+                      if (locked) {
+                        Alert.alert('Lingrow Premium ✨', `Gere até ${AI_CARD_LIMITS.premium} cards de uma vez no Premium. Em breve!`);
+                        return;
+                      }
+                      setCount(n);
+                    }}
+                  >
+                    <Text style={[styles.chipText, active && styles.chipTextActive, locked && { color: colors.textFaint }]}>
+                      {n}
+                    </Text>
+                    {locked && <Ionicons name="lock-closed" size={11} color={colors.textFaint} />}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {errorMsg ? (
@@ -384,7 +536,7 @@ export default function AiCreateScreen() {
               </View>
             ) : null}
 
-            <TouchableOpacity disabled={!canGenerate} activeOpacity={0.9} onPress={generate}>
+            <TouchableOpacity disabled={!canGenerate} activeOpacity={0.9} onPress={() => void generate()}>
               <LinearGradient
                 colors={[colors.primary, colors.primaryLight]}
                 start={{ x: 0, y: 0 }}
@@ -430,6 +582,14 @@ const styles = StyleSheet.create({
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: 13, fontFamily: fonts.medium, color: colors.text },
   chipTextActive: { color: colors.primary, fontFamily: fonts.bold },
+  countChip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface },
+  countChipLocked: { backgroundColor: colors.borderSoft, borderColor: colors.borderSoft },
+  levelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  levelBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6, backgroundColor: colors.surface },
+  levelBtnDisabled: { backgroundColor: colors.borderSoft, borderColor: colors.borderSoft },
+  levelBtnText: { fontSize: 12, fontFamily: fonts.semibold, color: colors.primary },
+  levelBadge: { backgroundColor: colors.primarySoft, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
+  levelBadgeText: { fontSize: 12, fontFamily: fonts.bold, color: colors.primary },
   errorBanner: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.dangerSoft, borderRadius: radius.md, padding: spacing.md, alignItems: 'flex-start' },
   errorText: { flex: 1, fontSize: 13, color: colors.danger, lineHeight: 18 },
   generateBtn: { flexDirection: 'row', borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.xs, shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
