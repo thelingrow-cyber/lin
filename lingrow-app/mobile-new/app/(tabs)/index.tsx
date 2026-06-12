@@ -18,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { useAuth } from '@/context/auth';
 import {
   getDecks,
   getCards,
@@ -39,7 +38,6 @@ const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20'
 const BETA_WELCOME_KEY = 'beta_welcome_done';
 
 export default function HomeScreen() {
-  const { user } = useAuth();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [totalCards, setTotalCards] = useState(0);
@@ -161,14 +159,6 @@ export default function HomeScreen() {
 
   const isToday = settings?.lastStudyDate === new Date().toDateString();
 
-  // saudação pessoal: nome do perfil (Apple/Google) ou fallback por horário
-  const firstName = String(
-    user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ''
-  ).trim().split(' ')[0];
-  const hour = new Date().getHours();
-  const daypart = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-  const greeting = firstName ? `${daypart}, ${firstName}` : daypart;
-
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -183,7 +173,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.headerTitle}>{greeting} 👋</Text>
+        {/* abertura com a marca (decisão do fundador 2026-06-12) */}
+        <Text style={styles.headerTitle}>Lingrow 🌱</Text>
         <Text style={styles.headerSub}>Pronto pra mais um dia de inglês?</Text>
 
         {/* streak (só quando nada vencido) ou CTA para estudar */}
@@ -221,7 +212,12 @@ export default function HomeScreen() {
 
         {/* deck with progress — sempre visível: o programa é a promessa central do app */}
         {(
-          <TouchableOpacity style={styles.deckCard} onPress={() => router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.deckCard}
+            // usuário novo passa pelo modal de meta (A4); veterano vai ao deck
+            onPress={() => learnedCount === 0 ? startStudy() : router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })}
+            activeOpacity={0.85}
+          >
             <View style={styles.deckCardRow}>
               <View style={styles.deckCardIconWrap}>
                 <Ionicons name="book" size={22} color={PRIMARY} />
@@ -238,7 +234,7 @@ export default function HomeScreen() {
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${(learnedCount / 1000) * 100}%` as any }]} />
             </View>
-            <TouchableOpacity style={styles.studyBtn} onPress={() => router.push({ pathname: '/study/[deckId]', params: { deckId: DECK_1000.id } })}>
+            <TouchableOpacity style={styles.studyBtn} onPress={startStudy}>
               <Text style={styles.studyBtnText}>Estudar agora</Text>
             </TouchableOpacity>
           </TouchableOpacity>

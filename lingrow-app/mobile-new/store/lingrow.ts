@@ -47,6 +47,8 @@ export interface CardProgress {
   nextReview: string | null;
   consecutiveAgain: number;
   consecutiveEasy: number;
+  /** Quando o card foi estudado pela 1ª vez (created_at da linha) — base do limite diário de cards novos. */
+  createdAt?: string;
 }
 
 export interface UserSettings {
@@ -236,6 +238,7 @@ export async function getAllProgress(): Promise<CardProgress[]> {
       nextReview: p.next_review,
       consecutiveAgain: p.consecutive_again,
       consecutiveEasy: p.consecutive_easy,
+      createdAt: p.created_at ?? undefined,
     }));
   } catch {
     return [];
@@ -393,10 +396,20 @@ export async function getStudySession(deckId: string): Promise<Card[]> {
     .slice(0, MAX_REVIEWS_PER_DAY);
 
   const studied = new Set(allProgress.map((p) => p.cardId));
+
+  // Limite diário REAL de cards novos (fix A3 da auditoria 2026-06-12):
+  // "5 por dia" era "5 por sessão" — agora desconta as novas já vistas HOJE
+  // (primeira vez estudado = created_at da linha de progresso).
+  const today = new Date().toDateString();
+  const newStudiedToday = allProgress.filter(
+    (p) => p.createdAt && new Date(p.createdAt).toDateString() === today
+  ).length;
+  const remainingToday = Math.max(0, settings.dailyGoal - newStudiedToday);
+
   const newCards = cards
     .filter((c) => !studied.has(c.id))
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .slice(0, isBuiltIn ? settings.dailyGoal : undefined);
+    .slice(0, isBuiltIn ? remainingToday : undefined);
 
   return [...toReview, ...newCards];
 }

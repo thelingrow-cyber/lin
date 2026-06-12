@@ -21,7 +21,7 @@ export async function hasNotificationPermission(): Promise<boolean> {
   return status === 'granted';
 }
 
-const MIN_DELAY_MS = 60 * 60 * 1000;      // 1 hora mínima
+const MIN_DELAY_MS = 30 * 60 * 1000;      // nunca notificar antes de 30 min
 const OVERDUE_DELAY_MS = 3 * 60 * 60 * 1000; // 3 horas se já vencido
 
 export async function scheduleNextReviewNotification(): Promise<void> {
@@ -43,11 +43,13 @@ export async function scheduleNextReviewNotification(): Promise<void> {
     if (hasDue) {
       // cards já vencidos — avisa em 3 horas
       notifyAt = new Date(now.getTime() + OVERDUE_DELAY_MS);
-    } else if (futureReviews.length > 0 && futureReviews[0] - now.getTime() > MIN_DELAY_MS) {
-      // próximo card com mais de 1 hora à frente
-      notifyAt = new Date(futureReviews[0]);
+    } else if (futureReviews.length > 0) {
+      // notifica no vencimento do próximo card — mas nunca antes de 30 min.
+      // Cobre os vencimentos curtos ("Difícil" → +10min), que antes
+      // não geravam lembrete nenhum (gap A-notif da auditoria 2026-06-12).
+      notifyAt = new Date(Math.max(futureReviews[0], now.getTime() + MIN_DELAY_MS));
     } else {
-      // nada relevante para notificar
+      // nenhum card no horizonte — nada para notificar
       return;
     }
 
