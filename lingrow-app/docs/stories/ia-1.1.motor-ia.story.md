@@ -42,10 +42,10 @@
 ## Tasks
 
 - [x] T1 (@dev): Migração 004 aplicada em produção via `supabase db push` (CLI instalado via npx, projeto linkado, histórico 001-003 reparado antes — ver Dev Agent Record)
-- [ ] T2 (@dev): Secrets — `AI_MODEL_ID=claude-haiku-4-5` ✅ configurado; `ANTHROPIC_API_KEY` ⏳ aguardando o fundador (decisão: subir depois)
+- [x] T2 (@dev): Secrets — `AI_MODEL_ID=claude-haiku-4-5` + `ANTHROPIC_API_KEY` configurados (key fornecida pelo fundador em 2026-06-11)
 - [x] T3 (@dev): Implementar `supabase/functions/generate-cards/index.ts` (fluxo: JWT → flag → input → tier → quota → Claude (tool use/JSON schema) → validar → record_ai_cards → 200; falha → refund → 502)
 - [x] T4 (@dev): Implementar `lib/ai.ts` (tipos + `generateCards()` + mapeamento de erros)
-- [ ] T5 (@dev): Testar os 6 cenários de resposta e registrar evidência no story (depende de T1+T2)
+- [x] T5 (@dev): 6/7 cenários verificados em produção (401 gateway, 401 app, 403 flag, 422 input, **200 geração real c/ 3 cards de qualidade + usage correto**, 429 anti-burst c/ retryAfterSeconds). 502/refund: caminho coberto por revisão de código (não forçável em prod sem quebrar a key). Flag `ai_enabled` LIGADA em 2026-06-11.
 - [ ] T6 (@qa): Gate da Fase 1 — validar AC1-AC11 + confirmar zero mudança em arquivos existentes
 
 ## Dev Notes (contrato — não inventar além disto)

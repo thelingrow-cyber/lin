@@ -27,3 +27,10 @@ Thumbs.db
 .aiox-core/local/
 .claude/settings.local.json
 .aiox/install-log.txt
+
+# AIOX Runtime — handoffs são artefatos de runtime (não versionar)
+.aiox/
+
+# Exports grandes / temporários (não versionar — estouram limite do GitHub)
+lingrow-export.zip
+*.zip

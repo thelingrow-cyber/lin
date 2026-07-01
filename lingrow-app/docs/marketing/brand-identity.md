@@ -117,7 +117,7 @@
 
 ## Nota de Confiança
 
-> Esta é uma **direção de marca** baseada em análise competitiva e posicionamento do produto — não em pesquisa com usuários reais. Alta confiança, não certeza absoluta. Validar com mercado antes de escalar.
+> Esta é uma **direção de marca** baseada em análise competiti 
 
 ---
 
