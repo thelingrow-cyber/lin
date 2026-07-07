@@ -150,22 +150,6 @@ export const AI_DISPLAY_LIMITS = { free: 3, premium: 20 } as const; // geraçõe
 export const AI_CARD_LIMITS = { free: 5, premium: 20 } as const; // cards por geração
 
 /**
- * Tier do usuário p/ exibição da quota (premium ativo e não expirado).
- */
-export async function isPremiumUser(): Promise<boolean> {
-  try {
-    const { data } = await supabase
-      .from('user_settings')
-      .select('is_premium, premium_expires_at')
-      .maybeSingle();
-    if (!data?.is_premium) return false;
-    return data.premium_expires_at == null || new Date(data.premium_expires_at) > new Date();
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Lê o uso de IA do mês corrente direto da tabela (RLS: leitura própria).
  * P/ exibir "✨ X gerações restantes" sem chamar a função.
  */

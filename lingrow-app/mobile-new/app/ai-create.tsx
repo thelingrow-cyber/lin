@@ -5,7 +5,7 @@
 // até o usuário aprovar na revisão (saveDeck + saveCards).
 // ============================================================
 
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,8 +32,8 @@ import {
   AI_CARD_LIMITS,
   generateCards,
   getAiUsage,
-  isPremiumUser,
 } from '@/lib/ai';
+import { usePremium } from '@/lib/premium';
 import { getCards, saveCards, saveDeck, Card, Deck } from '@/store/lingrow';
 import { Analytics } from '@/lib/analytics';
 import { colors, fonts, radius, shadow, spacing } from '@/theme';
@@ -67,8 +67,9 @@ export default function AiCreateScreen() {
   const [theme, setTheme] = useState(targetDeckId ? targetDeckName : '');
   const [usage, setUsage] = useState<AiUsage | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [isPremium, setIsPremium] = useState(false);
+  const { isPremium } = usePremium();
   const [count, setCount] = useState(5);
   const [level, setLevel] = useState<AiLevel>('intermediate');
   const [sampleFronts, setSampleFronts] = useState<string[]>([]);
@@ -82,19 +83,19 @@ export default function AiCreateScreen() {
 
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // quota p/ exibição (servidor é a autoridade — isto é informativo)
+  // quota p/ exibição (servidor é a autoridade — isto é informativo).
+  // isPremium vem do RevenueCat (usePremium) — reflete a compra instantaneamente,
+  // sem esperar o espelho do webhook no Supabase.
   useEffect(() => {
     (async () => {
       try {
-        const premium = await isPremiumUser();
-        setIsPremium(premium);
-        const limit = premium ? AI_DISPLAY_LIMITS.premium : AI_DISPLAY_LIMITS.free;
+        const limit = isPremium ? AI_DISPLAY_LIMITS.premium : AI_DISPLAY_LIMITS.free;
         setUsage(await getAiUsage(limit));
       } catch {
         // sem quota visível — segue sem a linha informativa
       }
     })();
-  }, []);
+  }, [isPremium]);
 
   // Caminho B: amostra de frases do deck p/ a IA gerar cards coerentes
   useEffect(() => {
@@ -129,10 +130,12 @@ export default function AiCreateScreen() {
     const t = theme.trim();
     if (t.length === 0) {
       setErrorMsg('Digite um tema ou toque em uma das sugestões.');
+      setQuotaExceeded(false);
       return;
     }
     const lvl = overrideLevel ?? level;
     setErrorMsg(null);
+    setQuotaExceeded(false);
     setPhase('generating');
     try {
       const result = await generateCards({
@@ -160,28 +163,34 @@ export default function AiCreateScreen() {
           case 'quota_exceeded':
             if (e.usage) setUsage(e.usage);
             setErrorMsg(
-              `Você usou todas as suas gerações deste mês (${e.usage?.used ?? ''} de ${e.usage?.limit ?? ''}). Em breve: gere muito mais com o Lingrow Premium ✨`
+              `Você usou todas as suas gerações deste mês (${e.usage?.used ?? ''} de ${e.usage?.limit ?? ''}).`
             );
+            setQuotaExceeded(true);
             return;
           case 'too_many_requests':
             setCooldown(e.retryAfterSeconds ?? 15);
             setErrorMsg('Calma, uma geração de cada vez 😉');
+            setQuotaExceeded(false);
             return;
           case 'generation_failed':
             setErrorMsg('A IA não conseguiu gerar desta vez — tente de novo. Essa tentativa não contou na sua cota.');
+            setQuotaExceeded(false);
             return;
           case 'network':
             setErrorMsg('Sem conexão. Verifique sua internet e tente novamente.');
+            setQuotaExceeded(false);
             return;
           case 'feature_disabled':
             router.back();
             return;
           case 'invalid_input':
             setErrorMsg('O tema precisa ter entre 1 e 100 caracteres.');
+            setQuotaExceeded(false);
             return;
         }
       }
       setErrorMsg('Algo deu errado. Tente novamente em instantes.');
+      setQuotaExceeded(false);
     }
   }, [theme, count, level, maxCards, targetDeckId, targetDeckName, sampleFronts]);
 
@@ -305,7 +314,7 @@ export default function AiCreateScreen() {
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: spacing.lg }} />
           <Text style={styles.loadingTitle}>Criando seu deck…</Text>
           <Text style={styles.loadingSub}>
-            Nossa IA está escrevendo frases sobre{'\n'}"{theme.trim()}"
+            Nossa IA está escrevendo frases sobre{'\n'}&quot;{theme.trim()}&quot;
           </Text>
         </View>
       </SafeAreaView>
@@ -318,7 +327,12 @@ export default function AiCreateScreen() {
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <TouchableOpacity onPress={discard} style={styles.backBtn}>
+            <TouchableOpacity
+              onPress={discard}
+              style={styles.backBtn}
+              accessibilityLabel="Voltar"
+              accessibilityRole="button"
+            >
               <Ionicons name="arrow-back" size={22} color={colors.primary} />
             </TouchableOpacity>
             <Text style={styles.title}>{targetDeckId ? 'Revise os cards novos' : 'Revise seu deck'}</Text>
@@ -452,7 +466,12 @@ export default function AiCreateScreen() {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityLabel="Voltar"
+            accessibilityRole="button"
+          >
             <Ionicons name="arrow-back" size={22} color={colors.primary} />
           </TouchableOpacity>
 
@@ -475,7 +494,7 @@ export default function AiCreateScreen() {
               value={theme}
               onChangeText={(v) => {
                 setTheme(v);
-                if (errorMsg) setErrorMsg(null);
+                if (errorMsg) { setErrorMsg(null); setQuotaExceeded(false); }
               }}
               maxLength={THEME_MAX}
               multiline
@@ -492,7 +511,7 @@ export default function AiCreateScreen() {
                       style={[styles.chip, theme === c.theme && styles.chipActive]}
                       onPress={() => {
                         setTheme(c.theme);
-                        if (errorMsg) setErrorMsg(null);
+                        if (errorMsg) { setErrorMsg(null); setQuotaExceeded(false); }
                       }}
                     >
                       <Text style={styles.chipEmoji}>{c.emoji}</Text>
@@ -514,7 +533,14 @@ export default function AiCreateScreen() {
                     style={[styles.countChip, active && styles.chipActive, locked && styles.countChipLocked]}
                     onPress={() => {
                       if (locked) {
-                        Alert.alert('Em breve 🌱', `Gere até ${AI_CARD_LIMITS.premium} cards de uma vez. Plano Premium chegando em breve!`);
+                        Alert.alert(
+                          'Recurso Premium ✨',
+                          `Gere até ${AI_CARD_LIMITS.premium} cards de uma vez com o Lingrow Premium.`,
+                          [
+                            { text: 'Agora não', style: 'cancel' },
+                            { text: 'Ver planos', onPress: () => router.push('/paywall' as Href) },
+                          ]
+                        );
                         return;
                       }
                       setCount(n);
@@ -532,7 +558,14 @@ export default function AiCreateScreen() {
             {errorMsg ? (
               <View style={styles.errorBanner}>
                 <Ionicons name="information-circle" size={18} color={colors.danger} />
-                <Text style={styles.errorText}>{errorMsg}</Text>
+                <View style={{ flex: 1, gap: spacing.xs }}>
+                  <Text style={styles.errorText}>{errorMsg}</Text>
+                  {quotaExceeded && (
+                    <TouchableOpacity onPress={() => router.push('/paywall' as Href)}>
+                      <Text style={styles.upgradeLink}>Ver planos Premium →</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             ) : null}
 
@@ -591,7 +624,8 @@ const styles = StyleSheet.create({
   levelBadge: { backgroundColor: colors.primarySoft, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
   levelBadgeText: { fontSize: 12, fontFamily: fonts.bold, color: colors.primary },
   errorBanner: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.dangerSoft, borderRadius: radius.md, padding: spacing.md, alignItems: 'flex-start' },
-  errorText: { flex: 1, fontSize: 13, color: colors.danger, lineHeight: 18 },
+  errorText: { fontSize: 13, color: colors.danger, lineHeight: 18 },
+  upgradeLink: { fontSize: 13, fontFamily: fonts.bold, color: colors.primary },
   generateBtn: { flexDirection: 'row', borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.xs, shadowColor: colors.primary, shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 5 },
   generateBtnText: { color: colors.onPrimary, fontFamily: fonts.bold, fontSize: 16 },
   quotaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },

@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { PostHogProvider } from 'posthog-react-native';
 import {
@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/context/auth';
 import { getSettings } from '@/store/lingrow';
 import { posthog } from '@/lib/analytics';
+import { configureRevenueCat } from '@/lib/premium';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -24,24 +25,27 @@ export const unstable_settings = {
 
 function RootNavigator() {
   const { session, loading } = useAuth();
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (loading) return;
     if (!session) {
       router.replace('/login');
-      setChecked(true);
       return;
     }
+    configureRevenueCat(session.user.id);
     // verificar onboarding
-    getSettings(session.user.id).then((s) => {
-      if (!s.onboardingDone) {
-        router.replace('/onboarding');
-      } else {
+    getSettings(session.user.id)
+      .then((s) => {
+        if (!s.onboardingDone) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/(tabs)');
+        }
+      })
+      .catch(() => {
+        // falha de rede: não arriscar mandar usuário existente pro onboarding de novo
         router.replace('/(tabs)');
-      }
-      setChecked(true);
-    });
+      });
   }, [session, loading]);
 
   return (
@@ -53,7 +57,8 @@ function RootNavigator() {
         <Stack.Screen name="study/[deckId]" options={{ headerShown: false }} />
         <Stack.Screen name="deck/[deckId]" options={{ headerShown: false }} />
         <Stack.Screen name="ai-create" options={{ headerShown: false }} />
-        <Stack.Screen name="session-done" options={{ headerShown: false }} />
+        <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="meu-ingles" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" />
     </>
