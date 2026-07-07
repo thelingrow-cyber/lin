@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   ScrollView,
@@ -34,7 +33,6 @@ import { isAiEnabled } from '@/lib/ai';
 import { colors, fonts } from '@/theme';
 
 const PRIMARY = colors.primary;
-const FEEDBACK_URL = 'https://wa.me/5592984296972?text=Feedback%20Lingrow%3A%20';
 const BETA_WELCOME_KEY = 'beta_welcome_done';
 
 export default function HomeScreen() {
@@ -177,7 +175,7 @@ export default function HomeScreen() {
         <Text style={styles.headerTitle}>Lingrow 🌱</Text>
         <Text style={styles.headerSub}>Pronto pra mais um dia de inglês?</Text>
 
-        {/* streak (só quando nada vencido) ou CTA para estudar */}
+        {/* streak (nada vencido) ou hero único do programa — um só bloco pedindo a ação, não dois */}
         {isToday && reviewCount === 0 ? (
           <View style={styles.streakCard}>
             <View style={styles.streakIconWrap}>
@@ -190,55 +188,48 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.streakSub}>Volte amanhã para novos cards.</Text>
           </View>
-        ) : (
-          <TouchableOpacity onPress={startStudy} activeOpacity={0.9}>
-            <LinearGradient
-              colors={[colors.primary, colors.primaryLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.ctaCard}
-            >
-              <View style={styles.ctaIconWrap}>
-                <Ionicons name="leaf" size={26} color={colors.onPrimary} />
-              </View>
-              <Text style={styles.ctaTitle}>{learnedCount > 0 || totalCards > 0 ? 'Estudar hoje' : '1000 Frases Essenciais'}</Text>
-              <Text style={styles.ctaSub}>{learnedCount > 0 || totalCards > 0 ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.` : 'Seu inglês começa aqui.'}</Text>
-              <View style={styles.ctaBtn}>
-                <Text style={styles.ctaBtnText}>Estudar agora</Text>
-              </View>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
+        ) : null}
 
-        {/* deck with progress — sempre visível: o programa é a promessa central do app */}
-        {(
+        {/* deck com progresso — hero único do programa, sempre visível */}
+        <TouchableOpacity
+          style={styles.deckCard}
+          // usuário novo passa pelo modal de meta (A4); veterano vai ao deck
+          onPress={() => learnedCount === 0 ? startStudy() : router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })}
+          activeOpacity={0.85}
+          accessibilityLabel="1000 Frases Essenciais em Inglês — ver deck"
+          accessibilityRole="button"
+        >
+          <View style={styles.deckCardRow}>
+            <View style={styles.deckCardIconWrap}>
+              <Ionicons name="book" size={22} color={PRIMARY} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.deckCardName}>1000 Frases Essenciais em Inglês</Text>
+              <Text style={styles.deckCardDesc}>
+                {learnedCount === 0 && totalCards === 0
+                  ? 'Seu inglês começa aqui.'
+                  : reviewCount > 0
+                    ? `Você tem ${reviewCount} card${reviewCount !== 1 ? 's' : ''} esperando.`
+                    : 'Aprenda inglês com frases reais usadas no dia a dia.'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.progressRow}>
+            <Text style={styles.progressText}>{learnedCount} / {SENTENCES.length} frases aprendidas</Text>
+            <Text style={styles.progressPct}>{Math.round((learnedCount / SENTENCES.length) * 100)}%</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${(learnedCount / SENTENCES.length) * 100}%` as any }]} />
+          </View>
           <TouchableOpacity
-            style={styles.deckCard}
-            // usuário novo passa pelo modal de meta (A4); veterano vai ao deck
-            onPress={() => learnedCount === 0 ? startStudy() : router.push({ pathname: '/deck/[deckId]', params: { deckId: DECK_1000.id } })}
-            activeOpacity={0.85}
+            style={styles.studyBtn}
+            onPress={startStudy}
+            accessibilityLabel="Estudar agora"
+            accessibilityRole="button"
           >
-            <View style={styles.deckCardRow}>
-              <View style={styles.deckCardIconWrap}>
-                <Ionicons name="book" size={22} color={PRIMARY} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.deckCardName}>1000 Frases Essenciais em Inglês</Text>
-                <Text style={styles.deckCardDesc}>Aprenda inglês com frases reais usadas no dia a dia.</Text>
-              </View>
-            </View>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressText}>{learnedCount} / 1000 frases aprendidas</Text>
-              <Text style={styles.progressPct}>{Math.round((learnedCount / 1000) * 100)}%</Text>
-            </View>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${(learnedCount / 1000) * 100}%` as any }]} />
-            </View>
-            <TouchableOpacity style={styles.studyBtn} onPress={startStudy}>
-              <Text style={styles.studyBtnText}>Estudar agora</Text>
-            </TouchableOpacity>
+            <Text style={styles.studyBtnText}>Estudar agora</Text>
           </TouchableOpacity>
-        )}
+        </TouchableOpacity>
 
         {/* stats */}
         <View style={styles.statsRow}>
@@ -376,7 +367,11 @@ export default function HomeScreen() {
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Criar Novo Deck</Text>
-              <TouchableOpacity onPress={() => setShowNewDeckModal(false)}>
+              <TouchableOpacity
+                onPress={() => setShowNewDeckModal(false)}
+                accessibilityLabel="Fechar"
+                accessibilityRole="button"
+              >
                 <Ionicons name="close" size={24} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -433,12 +428,6 @@ const styles = StyleSheet.create({
   streakTitle: { fontSize: 18, fontFamily: fonts.bold, color: colors.successDark },
   streakDays: { fontSize: 15, color: colors.successDark },
   streakSub: { fontSize: 14, color: colors.successDark },
-  ctaCard: { borderRadius: 24, padding: 22, alignItems: 'center', gap: 8, shadowColor: PRIMARY, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
-  ctaIconWrap: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  ctaTitle: { fontSize: 20, fontFamily: fonts.extrabold, color: colors.surface },
-  ctaSub: { fontSize: 14, color: 'rgba(255,255,255,0.85)', textAlign: 'center' },
-  ctaBtn: { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10, marginTop: 4 },
-  ctaBtnText: { color: PRIMARY, fontFamily: fonts.bold, fontSize: 15 },
   deckCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, gap: 12, shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 16, elevation: 4, borderWidth: 1, borderColor: colors.borderSoft },
   deckCardRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   deckCardIconWrap: { width: 44, height: 44, borderRadius: 13, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },

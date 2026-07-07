@@ -23,25 +23,29 @@ export default function DeckScreen() {
   // useFocusEffect: recarrega ao voltar (ex.: depois de adicionar cards via IA)
   useFocusEffect(useCallback(() => {
     (async () => {
-      void isAiEnabled().then(setAiEnabled);
+      try {
+        void isAiEnabled().then(setAiEnabled);
 
-      const decks = await getDecks();
-      const found = decks.find((d) => d.id === deckId);
-      if (found) setDeck(found);
+        const decks = await getDecks();
+        const found = decks.find((d) => d.id === deckId);
+        if (found) setDeck(found);
 
-      const cards = await getCards(deckId);
-      setTotalCards(cards.length);
+        const cards = await getCards(deckId);
+        setTotalCards(cards.length);
 
-      const allProgress = await getAllProgress();
-      const cardIds = new Set(cards.map((c) => c.id));
-      const learned = allProgress.filter((p) => cardIds.has(p.cardId) && p.repetitions > 0).length;
-      setLearnedCount(learned);
+        const allProgress = await getAllProgress();
+        const cardIds = new Set(cards.map((c) => c.id));
+        const learned = allProgress.filter((p) => cardIds.has(p.cardId) && p.repetitions > 0).length;
+        setLearnedCount(learned);
 
-      const s = await getSettings();
-      setDailyGoal(s.dailyGoal);
+        const s = await getSettings();
+        setDailyGoal(s.dailyGoal);
 
-      const session = await getStudySession(deckId);
-      setAvailableCount(session.length);
+        const session = await getStudySession(deckId);
+        setAvailableCount(session.length);
+      } catch {
+        // falha de rede — tela mantém o último estado carregado em vez de travar
+      }
     })();
   }, [deckId]));
 
@@ -52,7 +56,12 @@ export default function DeckScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-back" size={22} color={PRIMARY} />
         </TouchableOpacity>
         <Text style={styles.title}>{deck.name}</Text>

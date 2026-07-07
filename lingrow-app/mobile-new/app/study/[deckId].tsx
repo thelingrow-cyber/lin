@@ -28,9 +28,13 @@ import { colors, fonts } from '@/theme';
 
 const PRIMARY = colors.primary;
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function HighlightedText({ text, keyword, style }: { text: string; keyword?: string; style: any }) {
   if (!keyword) return <Text style={style}>{text}</Text>;
-  const parts = text.split(new RegExp(`(${keyword})`, 'gi'));
+  const parts = text.split(new RegExp(`(${escapeRegExp(keyword)})`, 'gi'));
   return (
     <Text style={style}>
       {parts.map((p, i) =>
@@ -53,30 +57,37 @@ export default function StudyScreen() {
   const [done, setDone] = useState(false);
   const [studied, setStudied] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [answering, setAnswering] = useState(false);
   const flipAnim = useRef(new Animated.Value(0)).current;
   const swipeAnim = useRef(new Animated.Value(0)).current;
   const swipeBgAnim = useRef(new Animated.Value(0)).current;
 
   const loadSession = useCallback(async () => {
     setLoading(true);
-    const decks = await getDecks();
-    const deck = decks.find((d) => d.id === deckId);
-    if (deck) setDeckName(deck.name);
-    const session = await getStudySession(deckId);
-    setCards(session);
-    setIndex(0);
-    setFlipped(false);
-    setDone(false);
-    setStudied(0);
-    if (session.length > 0) {
-      Analytics.reviewSessionStarted(deckId, deck?.name ?? '', session.length);
-      const { cancelAllScheduledNotificationsAsync } = await import('expo-notifications');
-      void cancelAllScheduledNotificationsAsync();
+    try {
+      const decks = await getDecks();
+      const deck = decks.find((d) => d.id === deckId);
+      if (deck) setDeckName(deck.name);
+      const session = await getStudySession(deckId);
+      setCards(session);
+      setIndex(0);
+      setFlipped(false);
+      setDone(false);
+      setStudied(0);
+      if (session.length > 0) {
+        Analytics.reviewSessionStarted(deckId, deck?.name ?? '', session.length);
+        const { cancelAllScheduledNotificationsAsync } = await import('expo-notifications');
+        void cancelAllScheduledNotificationsAsync();
+      }
+      flipAnim.setValue(0);
+      swipeAnim.setValue(0);
+      swipeBgAnim.setValue(0);
+    } catch (e: any) {
+      Alert.alert('Erro ao carregar sessão', e.message ?? 'Verifique sua conexão e tente novamente.');
+      setCards([]);
+    } finally {
+      setLoading(false);
     }
-    flipAnim.setValue(0);
-    swipeAnim.setValue(0);
-    swipeBgAnim.setValue(0);
-    setLoading(false);
   }, [deckId]);
 
   useEffect(() => { void loadSession(); }, [loadSession]);
@@ -90,51 +101,62 @@ export default function StudyScreen() {
   };
 
   const answer = async (a: SRSAnswer) => {
-    if (!current) return;
+    if (!current || answering) return;
+    setAnswering(true);
 
-    // direção: again/hard = esquerda (-1), good/easy = direita (+1)
-    const dir = (a === 'again' || a === 'hard') ? -1 : 1;
-    const shake = dir * 18;
-
-    swipeBgAnim.setValue(dir);
-
-    await new Promise<void>((resolve) => {
-      Animated.sequence([
-        Animated.timing(swipeAnim, { toValue: shake, duration: 80, useNativeDriver: true }),
-        Animated.timing(swipeAnim, { toValue: -shake * 0.6, duration: 70, useNativeDriver: true }),
-        Animated.timing(swipeAnim, { toValue: shake * 0.4, duration: 60, useNativeDriver: true }),
-        Animated.timing(swipeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
-      ]).start(() => resolve());
-    });
-
-    swipeBgAnim.setValue(0);
-
-    const progress = await getProgress(current.id);
-    const next = computeNextReview(progress, a);
     try {
-      await saveProgress(next);
-    } catch (e: any) {
-      Alert.alert('Erro ao salvar progresso', e.message ?? 'Tente novamente.');
-      return;
-    }
+      // direção: again/hard = esquerda (-1), good/easy = direita (+1)
+      const dir = (a === 'again' || a === 'hard') ? -1 : 1;
+      const shake = dir * 18;
 
-    swipeAnim.setValue(0);
+      swipeBgAnim.setValue(dir);
 
-    Analytics.cardReviewed(deckId, a, index);
+      await new Promise<void>((resolve) => {
+        Animated.sequence([
+          Animated.timing(swipeAnim, { toValue: shake, duration: 80, useNativeDriver: true }),
+          Animated.timing(swipeAnim, { toValue: -shake * 0.6, duration: 70, useNativeDriver: true }),
+          Animated.timing(swipeAnim, { toValue: shake * 0.4, duration: 60, useNativeDriver: true }),
+          Animated.timing(swipeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+        ]).start(() => resolve());
+      });
 
-    const nextIndex = index + 1;
-    if (nextIndex >= total) {
-      await updateStreak();
-      setStudied(total);
-      setDone(true);
-      Analytics.reviewSessionCompleted(deckId, deckName, total);
-      await requestNotificationPermission();
-      void scheduleNextReviewNotification();
-    } else {
-      setIndex(nextIndex);
-      setFlipped(false);
-      flipAnim.setValue(0);
-      setStudied(nextIndex);
+      swipeBgAnim.setValue(0);
+
+      try {
+        const progress = await getProgress(current.id);
+        const next = computeNextReview(progress, a);
+        await saveProgress(next);
+      } catch (e: any) {
+        Alert.alert('Erro ao salvar progresso', e.message ?? 'Tente novamente.');
+        return;
+      }
+
+      swipeAnim.setValue(0);
+
+      Analytics.cardReviewed(deckId, a, index);
+
+      const nextIndex = index + 1;
+      if (nextIndex >= total) {
+        // best-effort: o progresso do card já foi salvo acima; uma falha aqui
+        // não deve travar a tela de conclusão da sessão.
+        try {
+          await updateStreak();
+        } catch {
+          // streak não atualizou — próxima sessão tenta de novo
+        }
+        setStudied(total);
+        setDone(true);
+        Analytics.reviewSessionCompleted(deckId, deckName, total);
+        await requestNotificationPermission();
+        void scheduleNextReviewNotification();
+      } else {
+        setIndex(nextIndex);
+        setFlipped(false);
+        flipAnim.setValue(0);
+        setStudied(nextIndex);
+      }
+    } finally {
+      setAnswering(false);
     }
   };
 
@@ -196,21 +218,29 @@ export default function StudyScreen() {
     <SafeAreaView style={styles.safe}>
       {/* header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={async () => {
-          if (!done && cards.length > 0) {
-            if (index > 0) Analytics.reviewSessionAbandoned(deckId, index, total);
-            const permitted = await hasNotificationPermission();
-            if (permitted) void scheduleNextReviewNotification();
-          }
-          router.back();
-        }}>
+        <TouchableOpacity
+          onPress={async () => {
+            if (!done && cards.length > 0) {
+              if (index > 0) Analytics.reviewSessionAbandoned(deckId, index, total);
+              const permitted = await hasNotificationPermission();
+              if (permitted) void scheduleNextReviewNotification();
+            }
+            router.back();
+          }}
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-back" size={22} color={colors.textMuted} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerDeck}>{deckName}</Text>
           <Text style={styles.headerCount}>{index + 1} / {total}</Text>
         </View>
-        <TouchableOpacity onPress={() => { setIndex(0); setFlipped(false); flipAnim.setValue(0); }}>
+        <TouchableOpacity
+          onPress={() => { setIndex(0); setFlipped(false); flipAnim.setValue(0); }}
+          accessibilityLabel="Reiniciar sessão de estudo"
+          accessibilityRole="button"
+        >
           <Ionicons name="refresh" size={22} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
@@ -240,7 +270,12 @@ export default function StudyScreen() {
         <Animated.View style={[styles.flashcard, { transform: [{ rotateY: frontRotate }, { translateX: swipeAnim }] }, !flipped && styles.cardVisible, flipped && styles.cardHidden]}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardSide}>FRENTE</Text>
-            <TouchableOpacity style={styles.audioBtn} onPress={() => Speech.speak(current.front, { language: 'en-US' })}>
+            <TouchableOpacity
+              style={styles.audioBtn}
+              onPress={() => Speech.speak(current.front, { language: 'en-US' })}
+              accessibilityLabel="Ouvir pronúncia em inglês"
+              accessibilityRole="button"
+            >
               <Ionicons name="volume-medium-outline" size={20} color={PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -249,7 +284,7 @@ export default function StudyScreen() {
             <View style={styles.langBadge}>
               <Text style={styles.langBadgeText}>🇬🇧 Inglês</Text>
             </View>
-            <Text style={styles.cardHint}>Clique em "Mostrar Tradução" para ver a resposta</Text>
+            <Text style={styles.cardHint}>Clique em &quot;Mostrar Tradução&quot; para ver a resposta</Text>
           </View>
         </Animated.View>
 
@@ -257,7 +292,12 @@ export default function StudyScreen() {
         <Animated.View style={[styles.flashcard, styles.flashcardBack, { transform: [{ rotateY: backRotate }, { translateX: swipeAnim }] }, flipped && styles.cardVisible, !flipped && styles.cardHidden]}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardSide}>VERSO</Text>
-            <TouchableOpacity style={styles.audioBtn} onPress={() => Speech.speak(current.front, { language: 'en-US' })}>
+            <TouchableOpacity
+              style={styles.audioBtn}
+              onPress={() => Speech.speak(current.front, { language: 'en-US' })}
+              accessibilityLabel="Ouvir pronúncia em inglês"
+              accessibilityRole="button"
+            >
               <Ionicons name="volume-medium-outline" size={20} color={PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -284,16 +324,22 @@ export default function StudyScreen() {
           <Text style={styles.showBtnText}>Mostrar Tradução</Text>
         </TouchableOpacity>
       ) : (
-        <SRSButtons card={current} onAnswer={answer} />
+        <SRSButtons card={current} onAnswer={answer} disabled={answering} />
       )}
     </SafeAreaView>
   );
 }
 
-function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) => void }) {
+function SRSButtons({ card, onAnswer, disabled }: { card: Card; onAnswer: (a: SRSAnswer) => void; disabled?: boolean }) {
   return (
     <View style={styles.srsGrid}>
-      <TouchableOpacity style={[styles.srsBtn, styles.srsBtnAgain]} onPress={() => onAnswer('again')}>
+      <TouchableOpacity
+        style={[styles.srsBtn, styles.srsBtnAgain]}
+        onPress={() => onAnswer('again')}
+        disabled={disabled}
+        accessibilityLabel="Novamente — revisar em menos de 1 minuto"
+        accessibilityRole="button"
+      >
         <View style={[styles.srsIcon, { backgroundColor: colors.danger }]}>
           <Ionicons name="close-circle" size={24} color={colors.surface} />
         </View>
@@ -301,7 +347,13 @@ function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) =
         <Text style={styles.srsBtnTime}>{'< 1 min'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.srsBtn, styles.srsBtnHard]} onPress={() => onAnswer('hard')}>
+      <TouchableOpacity
+        style={[styles.srsBtn, styles.srsBtnHard]}
+        onPress={() => onAnswer('hard')}
+        disabled={disabled}
+        accessibilityLabel="Difícil — repete em breve"
+        accessibilityRole="button"
+      >
         <View style={[styles.srsIcon, { backgroundColor: colors.accent }]}>
           <Ionicons name="alert-circle" size={24} color={colors.surface} />
         </View>
@@ -309,7 +361,13 @@ function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) =
         <Text style={styles.srsBtnTime}>Repete</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.srsBtn, styles.srsBtnGood]} onPress={() => onAnswer('good')}>
+      <TouchableOpacity
+        style={[styles.srsBtn, styles.srsBtnGood]}
+        onPress={() => onAnswer('good')}
+        disabled={disabled}
+        accessibilityLabel="Bom — avança para o próximo card"
+        accessibilityRole="button"
+      >
         <View style={[styles.srsIcon, { backgroundColor: colors.success }]}>
           <Ionicons name="checkmark-circle" size={24} color={colors.surface} />
         </View>
@@ -317,7 +375,13 @@ function SRSButtons({ card, onAnswer }: { card: Card; onAnswer: (a: SRSAnswer) =
         <Text style={styles.srsBtnTime}>Próximo</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.srsBtn, styles.srsBtnEasy]} onPress={() => onAnswer('easy')}>
+      <TouchableOpacity
+        style={[styles.srsBtn, styles.srsBtnEasy]}
+        onPress={() => onAnswer('easy')}
+        disabled={disabled}
+        accessibilityLabel="Fácil — revisão em intervalo mais longo"
+        accessibilityRole="button"
+      >
         <View style={[styles.srsIcon, { backgroundColor: PRIMARY }]}>
           <Ionicons name="sparkles" size={24} color={colors.surface} />
         </View>

@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        posthog.identify(session.user.id, { email: session.user.email });
+        posthog.identify(session.user.id, { email: session.user.email ?? null });
       } else {
         posthog.reset();
       }

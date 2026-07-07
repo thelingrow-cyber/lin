@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '@/lib/supabase';
 import { colors, fonts } from '@/theme';
@@ -140,8 +140,15 @@ export default function LoginScreen() {
           />
         )}
 
-        <TouchableOpacity style={styles.googleBtn} onPress={handleGoogle} disabled={loading}>
-          <Text style={styles.googleBtnText}>G  Continuar com Google</Text>
+        <TouchableOpacity
+          style={styles.googleBtn}
+          onPress={handleGoogle}
+          disabled={loading}
+          accessibilityLabel="Continuar com Google"
+          accessibilityRole="button"
+        >
+          <AntDesign name="google" size={18} color="#EA4335" />
+          <Text style={styles.googleBtnText}>Continuar com Google</Text>
         </TouchableOpacity>
 
         <View style={styles.divider}>
@@ -204,11 +211,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   googleBtn: {
+    flexDirection: 'row',
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   googleBtnText: { fontSize: 16, fontFamily: fonts.semibold, color: colors.text },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 8 },

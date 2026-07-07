@@ -82,7 +82,12 @@ export default function CriarScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-back" size={22} color={PRIMARY} />
         </TouchableOpacity>
         <Text style={styles.title}>Criar Novo Card</Text>

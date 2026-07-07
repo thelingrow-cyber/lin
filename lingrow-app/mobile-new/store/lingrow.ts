@@ -79,47 +79,53 @@ async function getUserId(): Promise<string> {
 
 // ─── settings ────────────────────────────────────────────────────────────────
 
+/**
+ * Lança em falha de rede/DB — só devolve defaults quando a linha genuinamente
+ * não existe ainda (usuário novo, antes do onboarding criar o registro).
+ * Distinguir isso é o que impede uma falha de rede de ser confundida com
+ * "conta nova" e zerar streak/config de um usuário real (fix H1).
+ */
 export async function getSettings(overrideUserId?: string): Promise<UserSettings> {
-  try {
-    const userId = overrideUserId ?? await getUserId();
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+  const userId = overrideUserId ?? await getUserId();
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    if (!data) return { ...DEFAULT_SETTINGS, onboardingDone: false };
+  if (error) throw error;
+  if (!data) return { ...DEFAULT_SETTINGS, onboardingDone: false };
 
-    return {
-      onboardingDone: data.onboarding_done ?? false,
-      dailyGoal: data.daily_goal,
-      streak: data.streak ?? 0,
-      lastStudyDate: data.last_study_date ?? null,
-      autoPlay: data.auto_play_audio,
-      voiceVariant: data.voice_variant,
-      playbackSpeed: data.playback_speed,
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+  return {
+    onboardingDone: data.onboarding_done ?? false,
+    dailyGoal: data.daily_goal,
+    streak: data.streak ?? 0,
+    lastStudyDate: data.last_study_date ?? null,
+    autoPlay: data.auto_play_audio,
+    voiceVariant: data.voice_variant,
+    playbackSpeed: data.playback_speed,
+  };
 }
 
+/**
+ * Upsert PARCIAL — só grava as colunas presentes em `settings`. Colunas não
+ * incluídas mantêm o valor atual no banco (linha existente) ou o default da
+ * tabela (linha nova). Elimina o padrão ler-mesclar-escrever: uma falha de
+ * rede na leitura não pode mais sobrescrever streak/config reais (fix H1).
+ */
 export async function saveSettings(settings: Partial<UserSettings>): Promise<void> {
   const userId = await getUserId();
-  const current = await getSettings(userId);
-  const merged = { ...current, ...settings };
+  const patch: Record<string, unknown> = { id: userId, user_id: userId };
 
-  const { error } = await supabase.from('user_settings').upsert({
-    id: userId,
-    user_id: userId,
-    onboarding_done: merged.onboardingDone,
-    daily_goal: merged.dailyGoal,
-    streak: merged.streak,
-    last_study_date: merged.lastStudyDate,
-    auto_play_audio: merged.autoPlay,
-    voice_variant: merged.voiceVariant,
-    playback_speed: merged.playbackSpeed,
-  }, { onConflict: 'user_id' });
+  if (settings.onboardingDone !== undefined) patch.onboarding_done = settings.onboardingDone;
+  if (settings.dailyGoal !== undefined) patch.daily_goal = settings.dailyGoal;
+  if (settings.streak !== undefined) patch.streak = settings.streak;
+  if (settings.lastStudyDate !== undefined) patch.last_study_date = settings.lastStudyDate;
+  if (settings.autoPlay !== undefined) patch.auto_play_audio = settings.autoPlay;
+  if (settings.voiceVariant !== undefined) patch.voice_variant = settings.voiceVariant;
+  if (settings.playbackSpeed !== undefined) patch.playback_speed = settings.playbackSpeed;
+
+  const { error } = await supabase.from('user_settings').upsert(patch, { onConflict: 'user_id' });
   if (error) throw error;
 }
 
@@ -245,33 +251,27 @@ export async function getAllProgress(): Promise<CardProgress[]> {
   }
 }
 
+/**
+ * Lança em falha de rede/DB — só devolve progresso zerado quando o card
+ * genuinamente nunca foi estudado. Sem essa distinção, uma falha de rede no
+ * meio de uma sessão fazia o app "esquecer" meses de agendamento SRS de um
+ * card real e sobrescrever com o estado de card novo (fix H4).
+ */
 export async function getProgress(cardId: string): Promise<CardProgress> {
-  try {
-    const userId = await getUserId();
-    const { data } = await supabase
-      .from('card_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('card_id', cardId)
-      .single();
+  const userId = await getUserId();
+  const { data, error } = await supabase
+    .from('card_progress')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('card_id', cardId)
+    .maybeSingle();
 
-    if (!data) throw new Error('not found');
+  if (error) throw error;
 
-    return {
-      cardId: data.card_id,
-      userId: data.user_id,
-      repetitions: data.repetitions,
-      easeFactor: parseFloat(data.ease_factor),
-      interval: data.interval_days,
-      lastReview: data.last_review,
-      nextReview: data.next_review,
-      consecutiveAgain: data.consecutive_again,
-      consecutiveEasy: data.consecutive_easy,
-    };
-  } catch {
+  if (!data) {
     return {
       cardId,
-      userId: '',
+      userId,
       repetitions: 0,
       easeFactor: 2.5,
       interval: 1,
@@ -281,6 +281,18 @@ export async function getProgress(cardId: string): Promise<CardProgress> {
       consecutiveEasy: 0,
     };
   }
+
+  return {
+    cardId: data.card_id,
+    userId: data.user_id,
+    repetitions: data.repetitions,
+    easeFactor: parseFloat(data.ease_factor),
+    interval: data.interval_days,
+    lastReview: data.last_review,
+    nextReview: data.next_review,
+    consecutiveAgain: data.consecutive_again,
+    consecutiveEasy: data.consecutive_easy,
+  };
 }
 
 export async function saveProgress(progress: CardProgress): Promise<void> {
@@ -303,6 +315,12 @@ export async function saveProgress(progress: CardProgress): Promise<void> {
 
 export type SRSAnswer = 'again' | 'hard' | 'good' | 'easy';
 
+// Teto do intervalo em dias (~10 anos). Sem isso, respostas "bom"/"fácil"
+// consecutivas multiplicam o interval sem limite até estourar o range de
+// datas do JS — Date fica inválida e o algoritmo trava exatamente para o
+// card que o usuário mais domina (bug encontrado por teste unitário).
+const MAX_INTERVAL_DAYS = 3650;
+
 export function computeNextReview(
   progress: CardProgress,
   answer: SRSAnswer
@@ -322,7 +340,7 @@ export function computeNextReview(
     case 'hard':
       consecutiveAgain = 0;
       repetitions += 1;
-      interval = progress.repetitions === 0 ? 0 : Math.max(1, Math.round(Math.max(1, interval) * 1.2));
+      interval = progress.repetitions === 0 ? 0 : Math.min(MAX_INTERVAL_DAYS, Math.max(1, Math.round(Math.max(1, interval) * 1.2)));
       easeFactor = Math.max(1.3, easeFactor - 0.05);
       consecutiveEasy = 0;
       break;
@@ -330,14 +348,14 @@ export function computeNextReview(
       consecutiveAgain = 0;
       consecutiveEasy = 0;
       repetitions += 1;
-      interval = Math.max(1, Math.round(interval * easeFactor));
+      interval = Math.min(MAX_INTERVAL_DAYS, Math.max(1, Math.round(interval * easeFactor)));
       break;
     case 'easy':
       consecutiveAgain = 0;
       consecutiveEasy += 1;
       repetitions += 1;
       const easyMultiplier = consecutiveEasy >= 3 ? 1.8 : 1.3;
-      interval = Math.max(1, Math.round(interval * easeFactor * easyMultiplier));
+      interval = Math.min(MAX_INTERVAL_DAYS, Math.max(1, Math.round(interval * easeFactor * easyMultiplier)));
       easeFactor = Math.min(4.0, easeFactor + 0.1);
       break;
   }

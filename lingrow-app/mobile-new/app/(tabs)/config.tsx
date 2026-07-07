@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React from 'react';
+import { router, type Href } from 'expo-router';
+import React, { useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,36 +28,35 @@ export default function ConfigScreen() {
     ]);
   };
 
+  const [deleting, setDeleting] = useState(false);
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Excluir conta',
-      'Essa ação é irreversível. Todos os seus dados serão apagados permanentemente.',
+      'Essa ação é irreversível. Sua conta e todos os seus dados (decks, progresso, configurações) serão apagados permanentemente.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Excluir',
           style: 'destructive',
           onPress: async () => {
+            setDeleting(true);
             try {
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session?.user?.id) throw new Error('Usuário não autenticado');
-              const userId = session.user.id;
+              const { error } = await supabase.functions.invoke('delete-account');
+              if (error) throw error;
 
-              // apaga todos os dados do usuário
-              const { data: userDecks } = await supabase.from('decks').select('id').eq('user_id', userId);
-              if (userDecks && userDecks.length > 0) {
-                const deckIds = userDecks.map((d: any) => d.id);
-                await supabase.from('cards').delete().in('deck_id', deckIds);
-              }
-              await supabase.from('card_progress').delete().eq('user_id', userId);
-              await supabase.from('decks').delete().eq('user_id', userId);
-              await supabase.from('user_settings').delete().eq('user_id', userId);
-
+              // signOut depois do sucesso — se a exclusão falhar, a sessão
+              // continua válida e o usuário pode tentar de novo.
               await signOut();
               router.replace('/login');
-              Alert.alert('Conta excluída', 'Seus dados foram apagados com sucesso.');
+              Alert.alert('Conta excluída', 'Sua conta e seus dados foram apagados permanentemente.');
             } catch (e: any) {
-              Alert.alert('Erro', e.message ?? 'Não foi possível excluir a conta. Tente novamente.');
+              Alert.alert(
+                'Erro ao excluir conta',
+                e.message ?? 'Não foi possível excluir sua conta agora. Tente novamente em instantes.'
+              );
+            } finally {
+              setDeleting(false);
             }
           },
         },
@@ -69,6 +68,12 @@ export default function ConfigScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text style={styles.title}>Configurações</Text>
+
+        <TouchableOpacity style={styles.premiumBtn} onPress={() => router.push('/meu-ingles' as Href)}>
+          <Ionicons name="sparkles-outline" size={20} color={PRIMARY} />
+          <Text style={styles.premiumText}>Meu Inglês</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textFaint} />
+        </TouchableOpacity>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Áudio e Pronúncia</Text>
@@ -92,9 +97,9 @@ export default function ConfigScreen() {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} disabled={deleting}>
           <Ionicons name="trash-outline" size={20} color={colors.textFaint} />
-          <Text style={styles.deleteText}>Excluir minha conta</Text>
+          <Text style={styles.deleteText}>{deleting ? 'Excluindo…' : 'Excluir minha conta'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -112,6 +117,8 @@ const styles = StyleSheet.create({
   feedbackText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: colors.success },
   linkBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.primarySoft, borderRadius: 16, padding: 18 },
   linkText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: PRIMARY },
+  premiumBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: 16, padding: 18, borderWidth: 1.5, borderColor: colors.border },
+  premiumText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: colors.text },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.dangerSoft, borderRadius: 16, padding: 18 },
   logoutText: { fontSize: 16, fontFamily: fonts.bold, color: colors.danger },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 18 },
