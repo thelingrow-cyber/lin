@@ -33,7 +33,7 @@
 
 ### Tasks
 - [x] Escrever migration 007 + rollback
-- [ ] Aplicar em produção (`supabase db push`) — snapshot antes ⏳ aguardando confirmação do fundador
+- [x] Aplicar em produção — 2026-07-12, via SQL Editor do Dashboard no projeto `ireppvpjhtapnekmucam` ("Success. No rows returned")
 - [x] Estender types + getSettings/saveSettings
 - [x] Teste unitário roundtrip (3 testes: defaults, roundtrip, upsert parcial)
 
@@ -92,10 +92,10 @@
 6. Usuário que fecha o app no meio: próxima abertura vai para a home normal (sem loop de onboarding).
 
 ### Tasks
-- [ ] Parametrizar sessão de estudo para aceitar `sessionSize` + `startPosition` via params
-- [ ] Criar `app/first-session-done.tsx` com textos exatos
-- [ ] Mover pedido de permissão de notificação para a tela-semente
-- [ ] Testes de regressão: sessão normal do deck 1000 intacta (contagem, streak, notificações)
+- [x] Parametrizar sessão de estudo para aceitar `sessionSize` + `startPosition` via params (`StudySessionOptions` + `FIRST_SESSION_START`)
+- [x] Criar `app/first-session-done.tsx` com textos exatos
+- [x] Mover pedido de permissão de notificação para a tela-semente
+- [x] Testes de regressão: sessão normal do deck 1000 intacta (4 testes novos; 19/19 verdes)
 
 ---
 
@@ -112,10 +112,10 @@
 6. Gate de release 1.0.5: fluxo completo signup→onboarding→sessão→semente→paywall→home testado em sandbox com compra de trial funcionando.
 
 ### Tasks
-- [ ] Prop `context` no paywall + header condicional
-- [ ] Flag local `paywall_d0_shown`
-- [ ] Todos os eventos em `lib/analytics.ts`
-- [ ] Teste E2E manual completo + screenshot do funil no PostHog
+- [x] Prop `context` no paywall + header condicional (sair do paywall Day-0 leva à home; demais contextos intactos)
+- [x] Flag local `paywall_d0_shown` (`lib/flags.ts`)
+- [x] Todos os eventos em `lib/analytics.ts` (funil completo: onboarding → plano → 1ª sessão → semente → paywall)
+- [ ] Teste E2E manual completo + screenshot do funil no PostHog ⏳ depende do setup RevenueCat/ASC
 
 ---
 

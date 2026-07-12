@@ -6,12 +6,11 @@
 // real que o app faz com as respostas). ≤2,5s, pulável por tap,
 // respeita reduce-motion. Fase 2: o plano, 100% derivado do quiz —
 // projeção é aritmética transparente (daily × 30), nada inventado.
+// O CTA entrega direto na primeira sessão personalizada (E2.3).
 // Textos FINAIS — não alterar sem @po.
-// TODO [E2.3]: quando a primeira sessão personalizada existir, o CTA
-// passa a navegar para study/[deckId] (5 frases por nível) em vez da home.
 // ============================================================
 
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -23,8 +22,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Analytics } from '@/lib/analytics';
-import { LearningGoal, LevelSelfReport } from '@/store/lingrow';
+import { DECK_1000 } from '@/data/sentences';
+import { FIRST_SESSION_START, LearningGoal, LevelSelfReport } from '@/store/lingrow';
 import { colors, fonts, radius, shadow, spacing } from '@/theme';
+
+/** Tamanho da primeira sessão (FR-A2: "estuda 5 frases antes de qualquer outra tela"). */
+const FIRST_SESSION_SIZE = 5;
 
 const ANALYSIS_STEPS = [
   'Analisando seu objetivo…',
@@ -104,9 +107,16 @@ export default function PlanRevealScreen() {
 
   const continueToApp = () => {
     Analytics.planRevealContinue(goal, level, daily);
-    // TODO [E2.3]: trocar pela primeira sessão personalizada (study/[deckId]
-    // com sessionSize=5 e startPosition por nível) quando a story chegar.
-    router.replace('/(tabs)');
+    // direto para a primeira sessão personalizada — nunca para a home (FR-A2)
+    router.replace({
+      pathname: '/study/[deckId]',
+      params: {
+        deckId: DECK_1000.id,
+        sessionSize: String(FIRST_SESSION_SIZE),
+        startPosition: String(FIRST_SESSION_START[level]),
+        onboarding: '1',
+      },
+    } as unknown as Href);
   };
 
   if (phase === 'analyzing') {

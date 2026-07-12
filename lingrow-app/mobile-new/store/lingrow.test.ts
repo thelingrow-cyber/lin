@@ -1,4 +1,13 @@
-import { computeNextReview, getSettings, saveSettings, CardProgress, SRSAnswer } from './lingrow';
+import {
+  computeNextReview,
+  getSettings,
+  getStudySession,
+  saveSettings,
+  CardProgress,
+  FIRST_SESSION_START,
+  SRSAnswer,
+} from './lingrow';
+import { DECK_1000 } from '@/data/sentences';
 
 // Mock em memória do supabase — cobre apenas o que getSettings/saveSettings
 // usam (auth.getSession, select().eq().maybeSingle(), upsert). Os testes de
@@ -204,5 +213,42 @@ describe('getSettings/saveSettings — perfil de aprendizado (E2.1, migration 00
     expect(s.goal).toBe('travel');
     expect(s.levelSelfreport).toBe('zero');
     expect(s.onboardingVersion).toBe('v2');
+  });
+});
+
+describe('getStudySession — primeira sessão do onboarding (E2.3)', () => {
+  beforeEach(() => __resetSettingsRows());
+
+  it('entrega exatamente sessionSize cards a partir de startPosition', async () => {
+    const session = await getStudySession(DECK_1000.id, { sessionSize: 5, startPosition: 150 });
+    expect(session).toHaveLength(5);
+    expect(session.map((c) => c.position)).toEqual([150, 151, 152, 153, 154]);
+  });
+
+  it('cada nível entra no ponto mapeado — e o iniciante começa na frase 1', async () => {
+    const zero = await getStudySession(DECK_1000.id, {
+      sessionSize: 5,
+      startPosition: FIRST_SESSION_START.zero,
+    });
+    expect(zero[0].position).toBe(1);
+
+    const fluency = await getStudySession(DECK_1000.id, {
+      sessionSize: 5,
+      startPosition: FIRST_SESSION_START.fluency,
+    });
+    expect(fluency[0].position).toBe(300);
+  });
+
+  it('frases puladas NÃO viram progresso — elas apenas não entram nesta sessão', async () => {
+    const session = await getStudySession(DECK_1000.id, { sessionSize: 5, startPosition: 300 });
+    // nenhum card anterior ao ponto de entrada aparece; nada foi gravado por ter sido "pulado"
+    expect(session.every((c) => c.position >= 300)).toBe(true);
+  });
+
+  it('sem opções, a sessão normal continua respeitando a meta diária (regressão)', async () => {
+    await saveSettings({ dailyGoal: 5 });
+    const session = await getStudySession(DECK_1000.id);
+    expect(session).toHaveLength(5);
+    expect(session[0].position).toBe(1);
   });
 });

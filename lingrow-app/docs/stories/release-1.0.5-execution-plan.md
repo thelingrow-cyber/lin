@@ -79,14 +79,19 @@ E6.5b screenshots (Uma) ── SÓ depois de E2+E6.1 prontos (app novo na tela) 
 
 | Story | Status |
 |-------|--------|
-| E2.1 | ✅ código completo (2026-07-12): migration 007 + rollback escritas, store estendido, 15/15 testes · ⏳ `db push` em produção aguarda confirmação do fundador |
-| E2.2 | ✅ implementado (2026-07-12): onboarding 4 passos + analytics + modal de meta só para legados · ⏳ QA manual Expo Go |
-| E6.1 | ✅ implementado (2026-07-12): plan-reveal 2 fases + analytics · handoff para sessão do E2.3 = TODO no código · ⏳ QA manual |
-| E2.3 | — próximo elo (@dev) |
-| E2.4 | — |
+| E2.1 | ✅ **completa** — migration 007 aplicada em produção (`ireppvpjhtapnekmucam`) em 2026-07-12 via SQL Editor; store estendido; testes verdes |
+| E2.2 | ✅ código completo — onboarding 4 passos + analytics + modal de meta só para legados · ⏳ QA manual Expo Go |
+| E6.1 | ✅ código completo — plan-reveal 2 fases, CTA entrega na primeira sessão · ⏳ QA manual |
+| E2.3 | ✅ código completo — sessão parametrizada por nível, tela-semente, permissão de notificação no momento certo · ⏳ QA manual |
+| E2.4 | ✅ código completo — paywall com contexto Day-0, flag `paywall_d0_shown`, funil instrumentado · ⏳ E2E sandbox (depende do setup RevenueCat/ASC) |
 | E6.5a (ficha) | — pode iniciar em paralelo (@pm) |
-| E6.5b (screenshots) | — |
-| Gate release | — |
+| E6.5b (screenshots) | — depende de QA visual do fluxo acima |
+| Gate release | — @qa após QA manual + setup externo |
+
+**Fluxo Day-0 completo em código (2026-07-12):**
+`login → onboarding (promessa → objetivo → nível → meta) → "montando seu plano" → 5 frases do seu nível → tela-semente (+ permissão de notificação) → paywall Day-0 → home`
+
+**Bloqueios reais restantes para a 1.0.5:** (1) setup App Store Connect + RevenueCat (fundador), (2) QA manual do fluxo no Expo Go, (3) ficha + screenshots da loja (E6.5).
 
 *(Atualizar esta tabela a cada story concluída.)*
 

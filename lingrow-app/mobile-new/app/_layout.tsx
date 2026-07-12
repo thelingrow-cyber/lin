@@ -55,6 +55,8 @@ function RootNavigator() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         {/* plan-reveal: back desabilitado — o plano não se "des-monta" (E6.1) */}
         <Stack.Screen name="plan-reveal" options={{ headerShown: false, gestureEnabled: false }} />
+        {/* tela-semente: fim da primeira sessão do onboarding (E2.3) */}
+        <Stack.Screen name="first-session-done" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="study/[deckId]" options={{ headerShown: false }} />
         <Stack.Screen name="deck/[deckId]" options={{ headerShown: false }} />

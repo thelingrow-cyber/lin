@@ -408,12 +408,46 @@ export function getIntervalLabel(answer: SRSAnswer, progress: CardProgress): str
 
 // ─── study session ────────────────────────────────────────────────────────────
 
-export async function getStudySession(deckId: string): Promise<Card[]> {
+/**
+ * Posição inicial da PRIMEIRA sessão por autoavaliação de nível (E2.3 / FR-A2).
+ * Mapeamento simples sobre as 400 frases atuais — o placement test real chega
+ * com E1/FR-B4. Frases anteriores ao ponto de entrada ficam como não-vistas
+ * (nenhum progresso falso é gravado).
+ */
+export const FIRST_SESSION_START: Record<LevelSelfReport, number> = {
+  zero: 1,
+  stuck: 150,
+  fluency: 300,
+};
+
+export interface StudySessionOptions {
+  /** Nº máximo de cards NOVOS da sessão. Sobrepõe o limite diário (uso: primeira sessão do onboarding). */
+  sessionSize?: number;
+  /** Position a partir da qual pegar cards novos. Cards anteriores não são marcados — só não entram nesta sessão. */
+  startPosition?: number;
+}
+
+export async function getStudySession(
+  deckId: string,
+  options?: StudySessionOptions
+): Promise<Card[]> {
   const settings = await getSettings();
   const isBuiltIn = deckId === DECK_1000.id;
   const cards = isBuiltIn ? getBuiltinCards() : await getCards(deckId);
   const allProgress = await getAllProgress();
   const now = new Date();
+
+  // Primeira sessão do onboarding: só cards novos a partir do ponto de entrada,
+  // sem revisões e sem o teto diário (o usuário acabou de definir a meta e
+  // precisa do "aha" antes de qualquer outra tela).
+  if (options?.sessionSize !== undefined) {
+    const from = options.startPosition ?? 1;
+    const studiedIds = new Set(allProgress.map((p) => p.cardId));
+    return cards
+      .filter((c) => !studiedIds.has(c.id) && c.position >= from)
+      .sort((a, b) => a.position - b.position)
+      .slice(0, options.sessionSize);
+  }
 
   const MAX_REVIEWS_PER_DAY = 20;
 

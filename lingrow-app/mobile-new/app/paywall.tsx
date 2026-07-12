@@ -10,8 +10,8 @@
 // plano de monetização como fallback informativo.
 // ============================================================
 
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,6 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Purchases, { PurchasesPackage } from 'react-native-purchases';
 
+import { Analytics } from '@/lib/analytics';
 import { getCurrentOffering, isRevenueCatConfigured, restorePurchases, usePremium } from '@/lib/premium';
 import { colors, fonts, radius, shadow, spacing } from '@/theme';
 
@@ -47,12 +48,33 @@ const BENEFITS = [
 ];
 
 export default function PaywallScreen() {
+  // context: de onde o paywall foi aberto (E2.4). "onboarding" = Day-0, chega
+  // via replace vindo da tela-semente, então sair dele leva à home (não há
+  // stack para voltar). Demais contextos preservam o comportamento de modal.
+  const { context } = useLocalSearchParams<{ context?: string }>();
+  const source = context ?? 'direct';
+  const isOnboarding = source === 'onboarding';
+
   const { isPremium } = usePremium();
   const [offering, setOffering] = useState<Awaited<ReturnType<typeof getCurrentOffering>>>(null);
   const [loadingOffering, setLoadingOffering] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [selected, setSelected] = useState<'monthly' | 'annual'>('annual');
+
+  const leave = useCallback(() => {
+    if (isOnboarding) router.replace('/(tabs)');
+    else router.back();
+  }, [isOnboarding]);
+
+  const dismiss = () => {
+    Analytics.paywallDismissed(source);
+    leave();
+  };
+
+  useEffect(() => {
+    Analytics.paywallViewed(source);
+  }, [source]);
 
   useEffect(() => {
     (async () => {
@@ -69,9 +91,9 @@ export default function PaywallScreen() {
   useEffect(() => {
     if (isPremium) {
       Alert.alert('Você já é premium ✨', 'Sua assinatura está ativa.');
-      router.back();
+      leave();
     }
-  }, [isPremium]);
+  }, [isPremium, leave]);
 
   const monthlyPkg: PurchasesPackage | null = offering?.monthly ?? null;
   const annualPkg: PurchasesPackage | null = offering?.annual ?? null;
@@ -88,9 +110,10 @@ export default function PaywallScreen() {
     setPurchasing(true);
     try {
       await Purchases.purchasePackage(selectedPkg);
+      Analytics.trialStarted(source, selected);
       // isPremium atualiza sozinho via listener do usePremium (customerInfo update)
       Alert.alert('Bem-vindo ao Premium ✨', 'Sua assinatura está ativa.');
-      router.back();
+      leave();
     } catch (e: any) {
       const cancelled = e?.userCancelled === true
         || e?.code === Purchases.PURCHASES_ERROR_CODE?.PURCHASE_CANCELLED_ERROR;
@@ -108,7 +131,7 @@ export default function PaywallScreen() {
       const restored = await restorePurchases();
       if (restored) {
         Alert.alert('Compra restaurada ✨', 'Sua assinatura premium foi reativada.');
-        router.back();
+        leave();
       } else {
         Alert.alert('Nada para restaurar', 'Não encontramos uma assinatura ativa nesta conta.');
       }
@@ -123,13 +146,23 @@ export default function PaywallScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={dismiss}
           style={styles.closeBtn}
           accessibilityLabel="Fechar"
           accessibilityRole="button"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <Ionicons name="close" size={24} color={colors.textMuted} />
         </TouchableOpacity>
+
+        {/* header contextual do Day-0 (E2.4 AC2) — demais contextos seguem iguais */}
+        {isOnboarding && (
+          <View style={styles.onboardingHeader}>
+            <Text style={styles.onboardingHeaderText}>
+              Você plantou 5 frases hoje. O Premium acelera o resto.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.heroIconWrap}>
           <Ionicons name="sparkles" size={30} color={colors.primary} />
@@ -222,6 +255,20 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: spacing.xl, gap: spacing.md, paddingBottom: 40 },
   closeBtn: { alignSelf: 'flex-end', marginBottom: spacing.xs },
+  onboardingHeader: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  onboardingHeaderText: {
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.primary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
   heroIconWrap: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   title: { fontSize: 26, fontFamily: fonts.extrabold, color: colors.primary, textAlign: 'center', letterSpacing: -0.4 },
   sub: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.sm },

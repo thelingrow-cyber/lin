@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -49,7 +49,15 @@ function HighlightedText({ text, keyword, style }: { text: string; keyword?: str
 }
 
 export default function StudyScreen() {
-  const { deckId } = useLocalSearchParams<{ deckId: string }>();
+  // sessionSize/startPosition/onboarding: só a PRIMEIRA sessão do onboarding
+  // (E2.3) os envia. Sessão normal ignora tudo isso e segue idêntica.
+  const { deckId, sessionSize, startPosition, onboarding } = useLocalSearchParams<{
+    deckId: string;
+    sessionSize?: string;
+    startPosition?: string;
+    onboarding?: string;
+  }>();
+  const isOnboardingSession = onboarding === '1';
   const [deckName, setDeckName] = useState('');
   const [cards, setCards] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -68,7 +76,12 @@ export default function StudyScreen() {
       const decks = await getDecks();
       const deck = decks.find((d) => d.id === deckId);
       if (deck) setDeckName(deck.name);
-      const session = await getStudySession(deckId);
+      const session = await getStudySession(
+        deckId,
+        isOnboardingSession
+          ? { sessionSize: Number(sessionSize) || 5, startPosition: Number(startPosition) || 1 }
+          : undefined
+      );
       setCards(session);
       setIndex(0);
       setFlipped(false);
@@ -76,6 +89,7 @@ export default function StudyScreen() {
       setStudied(0);
       if (session.length > 0) {
         Analytics.reviewSessionStarted(deckId, deck?.name ?? '', session.length);
+        if (isOnboardingSession) Analytics.firstSessionStarted(session.length);
         const { cancelAllScheduledNotificationsAsync } = await import('expo-notifications');
         void cancelAllScheduledNotificationsAsync();
       }
@@ -88,7 +102,7 @@ export default function StudyScreen() {
     } finally {
       setLoading(false);
     }
-  }, [deckId]);
+  }, [deckId, isOnboardingSession, sessionSize, startPosition]);
 
   useEffect(() => { void loadSession(); }, [loadSession]);
 
@@ -145,8 +159,20 @@ export default function StudyScreen() {
           // streak não atualizou — próxima sessão tenta de novo
         }
         setStudied(total);
-        setDone(true);
         Analytics.reviewSessionCompleted(deckId, deckName, total);
+
+        if (isOnboardingSession) {
+          // primeira sessão (E2.3): a tela-semente assume daqui — inclusive o
+          // pedido de permissão de notificação, que agora acontece LÁ (AC4).
+          Analytics.firstSessionCompleted(total);
+          router.replace({
+            pathname: '/first-session-done',
+            params: { studied: String(total) },
+          } as unknown as Href);
+          return;
+        }
+
+        setDone(true);
         await requestNotificationPermission();
         void scheduleNextReviewNotification();
       } else {

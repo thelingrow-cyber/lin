@@ -33,6 +33,30 @@ export const Analytics = {
   planRevealContinue: (goal: string, level: string, dailyGoal: number) =>
     posthog.capture('plan_reveal_continue', { goal, level, daily_goal: dailyGoal, onboarding_version: ONBOARDING_VERSION }),
 
+  // Primeira sessão + tela-semente (E2.3 / FR-A2, FR-A3)
+  firstSessionStarted: (totalCards: number) =>
+    posthog.capture('first_session_started', { total_cards: totalCards, onboarding_version: ONBOARDING_VERSION }),
+
+  firstSessionCompleted: (totalCards: number) =>
+    posthog.capture('first_session_completed', { total_cards: totalCards, onboarding_version: ONBOARDING_VERSION }),
+
+  seedScreenViewed: (owned: number) =>
+    posthog.capture('seed_screen_viewed', { owned, onboarding_version: ONBOARDING_VERSION }),
+
+  notificationPermissionResult: (granted: boolean) =>
+    posthog.capture('notification_permission_result', { granted, onboarding_version: ONBOARDING_VERSION }),
+
+  // Paywall (E2.4 / FR-A4, FR-A5). `context` distingue de onde o paywall veio —
+  // E6.2 amplia isso para `source` em TODAS as portas.
+  paywallViewed: (context: string) =>
+    posthog.capture('paywall_viewed', { context, onboarding_version: ONBOARDING_VERSION }),
+
+  trialStarted: (context: string, plan: 'monthly' | 'annual') =>
+    posthog.capture('trial_started', { context, plan, onboarding_version: ONBOARDING_VERSION }),
+
+  paywallDismissed: (context: string) =>
+    posthog.capture('paywall_dismissed', { context, onboarding_version: ONBOARDING_VERSION }),
+
   // Sessão geral
   sessionStarted: () =>
     posthog.capture('session_started'),
