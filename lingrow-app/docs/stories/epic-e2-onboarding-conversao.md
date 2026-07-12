@@ -45,18 +45,33 @@
 
 ### Especificação de telas (textos finais, não alterar sem @po)
 
+> **Revisão 2026-07-12:** após análise do onboarding do Prequel (referência trazida pelo fundador), foram adicionadas 2 telas SEM pergunta — a **ponte** (antes do quiz) e o **interstício do método** (no meio dele). Ambas são fricção deliberada e instrumentada (`onboarding_interstitial_continue`): se derrubarem passagem no funil, saem. Ver "Padrões da referência Prequel" ao final da story.
+
 **Passo 0 — Promessa (substitui os 3 slides):**
 > Título: "Inglês que não some."
 > Sub: "Aqui, o que você aprende fica. O app garante — cientificamente."
 > CTA: "Começar"
 
+**Passo 0.5 — Ponte (micro-compromisso antes do quiz):**
+> Título: "Vamos montar o seu plano."
+> Sub: "3 perguntas, 30 segundos. Nenhum currículo genérico — o Lingrow começa de onde você está."
+> CTA: "Personalizar meu plano"
+
 **Passo 1 — Objetivo (FR-A1a):** "O que o inglês vai destravar pra você?"
+> Subtítulo (o que a resposta muda): "Isso define o foco do seu plano."
 > Opções (cards com ícone, 1 toque avança): 💼 Trabalho e carreira · ✈️ Viagem · 🎓 Estudos e provas · 🌍 Morar fora · 💪 Por mim mesmo
 
-**Passo 2 — Nível (FR-A1b):** "Onde você está hoje? (sem julgamento — o método funciona em qualquer ponto)"
+**Passo 2 — Nível (FR-A1b):** "Onde você está hoje?"
+> Subtítulo: "Isso define por onde você começa — sem julgamento, o método funciona em qualquer ponto."
 > Opções: 🌱 Começando do zero · 😤 Entendo, mas travo na hora de usar · 🚀 Já me viro — quero chegar na fluência
 
+**Passo 2.5 — Interstício do MÉTODO (o que o Prequel faz com features, nós fazemos com o método):**
+> Título: "O app age antes do esquecimento."
+> Sub: "Cada frase volta pra você no momento exato em que ia escapar da sua memória. É por isso que aqui o inglês não some."
+> CTA: "Faz sentido"
+
 **Passo 3 — Meta (FR-A1c):** "Quanto cabe no seu dia?"
+> Subtítulo: "Isso define seu ritmo e a hora do lembrete."
 > Opções: 5 frases (~3 min) · 10 frases (~6 min) · 15 frases (~9 min)
 > Nota sob as opções: "Constância vence intensidade. Dá pra mudar depois."
 
@@ -68,8 +83,21 @@
 5. Acessibilidade: cada opção com `accessibilityLabel` completo; navegável com leitor de tela.
 6. Typecheck + lint + testes passam; nenhuma regressão no fluxo de usuário existente (onboardingDone=true pula tudo, como hoje).
 
+### Padrões da referência Prequel — o que foi adotado, adaptado e recusado (2026-07-12)
+
+| Padrão observado no Prequel | Decisão | Onde |
+|---|---|---|
+| Tela-ponte antes do quiz ("Answer a few questions to tailor the app") | **Adotado** — micro-compromisso, prepara a pessoa | Passo 0.5 |
+| Subtítulo em cada pergunta explicando o porquê ("This helps us personalize…") | **Adotado, mas honesto** — cada subtítulo diz o que aquela resposta MUDA de fato no app (Artigo IV: nada de personalização vaga) | Passos 1-3 |
+| Interstício de valor no meio do quiz ("Fast edits, great results") | **Adaptado** — o nosso interstício vende o MÉTODO (SRS), não features | Passo 2.5 |
+| Barra de progresso no topo + cards com emoji | **Adotado** (já existia) | topo do stepper |
+| Realce da opção ao tocar antes de avançar | **Adotado** (180ms de feedback) | `OptionCard` |
+| CTA em pílula, tipografia display grande | **Adotado** (na paleta clara da marca — o dark do Prequel NÃO foi copiado) | `styles.cta` |
+| Prova social numérica ("4.7", "18.4M happy users") e citação de imprensa (Forbes) | **RECUSADO** — não temos nota, base nem citação reais. Inventar viola o Artigo IV e é risco de rejeição na Apple. A produção legítima dessas provas é a story **E6.4** (pedido de avaliação nos momentos de vitória); quando existirem de verdade, entram aqui e no paywall (E4.5 já prevê o slot condicional) | — |
+| Quiz ANTES do cadastro (Prequel deixa a conta para depois: "Dive in" primeiro) | **Decisão em aberto para o fundador** — é a mudança de maior impacto potencial no funil (remove o muro do login antes de qualquer valor), mas exige repensar onde o progresso vive antes de existir usuário. Registrado como proposta em `conversion-audit-2026-07.md` §7 | — |
+
 ### Tasks
-- [x] Reescrever `app/onboarding.tsx` (4 passos, estado local, textos exatos acima)
+- [x] Reescrever `app/onboarding.tsx` (promessa → ponte → objetivo → nível → método → meta; textos exatos acima)
 - [x] Remover trigger do modal de meta para novos usuários (manter para legados — condição `onboardingVersion` na home)
 - [x] Analytics por passo (onboarding_started/step_completed/completed com onboarding_version)
 - [ ] QA manual no Expo Go (fluxo novo + fluxo usuário existente)

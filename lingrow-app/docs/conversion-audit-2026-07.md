@@ -135,6 +135,18 @@ Para deixar explícito o que esta auditoria **não** vai duplicar, porque E1-E5 
 | Avaliações na loja | ~0 | ≥ 20 avaliações até o fim do ciclo 1.1 | App Store Connect |
 | Reconversão winback | — | capturar baseline (sem meta na v1) | RevenueCat + PostHog |
 
+## 7. Proposta em aberto (decisão do fundador): cadastro DEPOIS do quiz
+
+**Observado no Prequel** (screenshots analisados em 2026-07-12): o app deixa a pessoa entrar sem conta — "Dive in" leva direto ao quiz e ao produto; "Already have an account? Log in" é o caminho secundário. A conta só entra em cena quando há algo a salvar.
+
+**Hoje no Lingrow:** `_layout.tsx` manda para `/login` antes de qualquer coisa. **A primeira tela do app é um muro** — a pessoa precisa entregar e-mail/Apple/Google antes de ver um único benefício. Todo o trabalho de E2/E6.1 (quiz, plano, primeira sessão) acontece DEPOIS desse muro, ou seja, sobre o tráfego que já sobreviveu a ele.
+
+**Ganho potencial:** é a maior alavanca isolada de topo de funil que resta — cada ponto percentual perdido no login é perdido antes de qualquer chance de conversão.
+
+**Custo real (por isso é decisão, não tarefa):** o progresso do SRS hoje vive em `card_progress` com `user_id` (RLS por usuário). Para o quiz + primeira sessão rodarem sem conta, seria preciso: (a) guardar respostas e progresso localmente (AsyncStorage), (b) pedir a conta no momento certo — proposta: na tela-semente, trocando "sua primeira revisão amanhã" pela criação de conta ("pra eu te lembrar amanhã, preciso saber quem é você"), e (c) migrar o estado local para o servidor no primeiro login (merge idempotente). É uma story de porte médio, com risco de perda de dados se malfeita.
+
+**Recomendação:** não fazer na 1.0.5 (não atrasar a receita). Medir primeiro: com o funil instrumentado, veremos exatamente quanta gente morre no login. Se a queda for grande, isso vira a primeira story da 1.1.
+
 ## 6. Riscos e limites desta análise
 
 1. **Não inchar a 1.0.5** (risco nº 5 do PRD v2): só E6.1 e E6.5 entram na 1.0.5 — E6.1 porque é 1 tela que multiplica o E2, E6.5 porque a submissão exige screenshots de qualquer forma. Todo o resto é 1.1+.

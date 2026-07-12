@@ -15,6 +15,13 @@ export const Analytics = {
   onboardingStepCompleted: (step: number, choice: string) =>
     posthog.capture('onboarding_step_completed', { step, choice, onboarding_version: ONBOARDING_VERSION }),
 
+  /**
+   * Telas SEM pergunta do onboarding (ponte e interstício do método — padrão
+   * Prequel). São fricção deliberada: se derrubarem gente, o funil mostra e elas saem.
+   */
+  onboardingInterstitialContinue: (screen: 'bridge' | 'method') =>
+    posthog.capture('onboarding_interstitial_continue', { screen, onboarding_version: ONBOARDING_VERSION }),
+
   onboardingCompleted: (goal?: string | null, level?: string | null, dailyGoal?: number) => {
     const props: Record<string, string | number> = { onboarding_version: ONBOARDING_VERSION };
     if (goal) props.goal = goal;
