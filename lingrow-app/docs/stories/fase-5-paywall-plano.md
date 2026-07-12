@@ -24,22 +24,12 @@ A migração `004_ai_quota_premium.sql` já criou e está em produção:
 
 ---
 
-## Setup manual (fundador faz ANTES de chamar o Fable 5)
+## Setup manual (fundador)
 
-### App Store Connect (appstoreconnect.apple.com)
-1. Meus Apps → Lingrow → Funcionalidades → Compras no app
-2. Assinatura recorrente: `com.lingrow.flashcards.premium.monthly` — R$14,90/mês, trial 7 dias
-3. Assinatura recorrente: `com.lingrow.flashcards.premium.annual` — R$99/ano
-4. Grupo de assinaturas: "Lingrow Premium"
-
-### RevenueCat (revenuecat.com)
-1. Criar conta gratuita + projeto "Lingrow"
-2. Conectar App Store Connect via chave de API
-3. Entitlement: `premium`
-4. Mapear os dois produtos acima
-5. Offering: `default`
-6. Copiar a **Public SDK Key** (`appl_...`)
-7. Webhook URL: `https://{projeto}.supabase.co/functions/v1/revenuecat-webhook`
+> ⚠️ **DESATUALIZADO — não siga os valores desta seção.** Os preços e o trial foram
+> revisados pela `monetization-strategy-2026-07.md` v2.0 (R$24,90/mês · R$179,90/ano ·
+> trial de **14** dias, não 7). O checklist correto, com os nomes exatos que o código
+> espera, vive em **`docs/stories/revenuecat-setup-checklist.md`**.
 
 ---
 
