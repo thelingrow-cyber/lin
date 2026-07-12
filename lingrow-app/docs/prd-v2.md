@@ -3,6 +3,7 @@
 | Data | Versão | Descrição | Autor |
 |------|--------|-----------|-------|
 | 2026-07-07 | 2.0 | Derivado do `ceo-review-2026-07.md`. Substitui o roadmap v2/v3 do `prd.md` v1.1 (que permanece válido como histórico da v1) | Orion (@aiox-master) |
+| 2026-07-12 | 2.1 | Bloco F (Máquina de Conversão, épico E6) adicionado a partir da `conversion-audit-2026-07.md` — fecha os gaps de funil que E1-E5 não cobrem: plan reveal, superfícies de conversão, jornada do trial, avaliações, loja, winback | Orion (@aiox-master) |
 
 > **Regra de leitura:** cada requisito referencia o épico que o executa (E1-E5). As stories detalhadas com critérios de aceite vivem em `docs/stories/epic-e*.md`. Decisões estratégicas e evidências de mercado vivem no `ceo-review-2026-07.md` — este PRD não repete argumentos, só define O QUE construir.
 
@@ -70,6 +71,17 @@
 - **FR-E2**: **Geração por contexto real** (Movimento 3): a tela "Criar com IA" aceita colar texto longo (vaga de emprego, e-mail, letra de música) além do tema curto; a edge function extrai o vocabulário relevante e gera cards no formato padrão. Mesmo pipeline de quota/limites.
 - **FR-E3**: Rótulos de tempo dos botões SRS passam a exibir o intervalo REAL calculado (ex.: "Fácil → 12 dias"), usando o cálculo do agendador vigente.
 
+### Bloco F — Máquina de Conversão (épico E6, distribuído: 1.0.5 / 1.1 / 1.2)
+
+> Origem: `conversion-audit-2026-07.md` (GAPs 1-6). Complementa os Blocos A e D sem sobreposição — cobre as bordas do funil que E2/E4.5 não tocam.
+
+- **FR-F1** *(1.0.5)*: Entre o último passo do quiz (FR-A1) e a primeira sessão (FR-A2), o app deve exibir a tela **"montando seu plano"**: análise animada curta e honesta (≤ 2,5s, pulável, reduce-motion) seguida do resumo do plano personalizado derivado 100% das respostas (objetivo, ponto de partida, meta, projeção aritmética transparente).
+- **FR-F2** *(1.1)*: **Mapa fechado de superfícies de conversão** — card contextual na home (free, com patrimônio, dispensável), linha de assinatura em Configurações (3 estados: free/trial/premium) e rodapé pós-marco — com regra global inviolável de no máximo 1 superfície proativa/dia, e parâmetro `source` obrigatório em TODO acesso ao paywall (funil por origem no PostHog).
+- **FR-F3** *(1.1)*: **Jornada do trial**: status visível (Config + Meu Inglês), recap de valor no D7 (notificação com patrimônio real, só se houver valor), aviso transparente de cobrança no D12, e re-apresentação única do paywall pós-expiração sem conversão. Prioridade de notificação: D12 > D7 > conteúdo (FR-C6); máx 1/dia mantido.
+- **FR-F4** *(1.1)*: **Pedido de avaliação na loja** (`expo-store-review`) exclusivamente em momentos de vitória (2º capítulo completo, marcos 50/100, recuperação completa), com gating de 60 dias entre pedidos e canal manual em Configurações.
+- **FR-F5** *(1.0.5, gate de submissão)*: **Loja como página de vendas**: ficha App Store/Play Store reescrita no tom da marca (hook "Inglês que não some", só inglês, "frases" não "cards"), 6 screenshots com headline (6.7" + 6.1") capturados do app real, feature graphic 1024×500 do Play Store. Baseline de conversão da loja registrada no go-live.
+- **FR-F6** *(1.2)*: **Winback v1**: detecção de lapsed (trial/assinatura expirados) via RevenueCat, variante da tela de retorno (FR-C2) com CTA de reconsideração (máx 1×/30 dias), pesquisa de churn de 1 pergunta, e spike documentado de win-back offers nativas.
+
 ## 4. Requisitos Não-Funcionais
 
 - **NFR1**: Nenhuma feature nova pode degradar o funil existente — regressão automatizada de contagem/DECK_1000/auth continua obrigatória (regra do epic IA mantida).
@@ -91,15 +103,22 @@
 | 1.2 | Trial→paid D35 | ≥ 8% | RevenueCat |
 | 1.2 | Share rate em marcos | ≥ 3% | evento share_completed |
 | contínuo | Crash-free sessions | ≥ 99,5% | Sentry (instalar — pendência conhecida) |
+| 1.0.5 | plan_reveal → primeira sessão | ≥ 90% | eventos FR-F1 |
+| 1.0.5 | Conversão da loja (impressão→download) | baseline capturada; melhorar pós FR-F5 | App Store Connect / Play Console |
+| 1.1 | paywall_viewed com `source` | 100% dos acessos | eventos FR-F2 |
+| 1.1 | Avaliações na loja | ≥ 20 até o fim do ciclo 1.1 | App Store Connect (FR-F4) |
 
 ## 6. Dependências e sequência
 
 ```
 E2 (onboarding) ──────► 1.0.5  (não depende de nada; usa conteúdo atual)
+E6.1 + E6.5 ──────────► 1.0.5  (plan reveal integra E2; loja é gate da submissão)
 E1 (conteúdo CEFR) ───► 1.1    (FR-B4 integra com E2 já lançado)
 E3 (patrimônio) ──────► 1.1    (FR-C7 depende de E1 para "por capítulo")
+E6.2-E6.4 ────────────► 1.1    (superfícies dependem de E3.1; avaliação depende de E1.5/E3)
 E4 (design premium) ──► 1.2    (FR-D3 depende do texto final das 1000 frases de E1)
 E5 (FSRS + Mov.3) ────► 1.2    (independente; FR-E3 depende de E5-FSRS)
+E6.6 (winback) ───────► 1.2    (depende de trials expirados existirem — dado real)
 ```
 
 Pré-requisitos externos (fora do código, donos: fundador + @devops):
@@ -121,6 +140,6 @@ Pré-requisitos externos (fora do código, donos: fundador + @devops):
 
 ---
 
-*Execução: stories detalhadas em `docs/stories/epic-e1-conteudo-cefr.md` · `epic-e2-onboarding-conversao.md` · `epic-e3-patrimonio-retencao.md` · `epic-e4-design-premium.md` · `epic-e5-fsrs-vida-real.md`.*
+*Execução: stories detalhadas em `docs/stories/epic-e1-conteudo-cefr.md` · `epic-e2-onboarding-conversao.md` · `epic-e3-patrimonio-retencao.md` · `epic-e4-design-premium.md` · `epic-e5-fsrs-vida-real.md` · `epic-e6-maquina-conversao.md`.*
 
 — Orion, orquestrando o sistema 🎯
