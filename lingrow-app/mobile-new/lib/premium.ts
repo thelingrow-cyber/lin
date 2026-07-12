@@ -11,6 +11,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesOffering } from 'react-native-purchases';
 
+import { supabase } from '@/lib/supabase';
+
 export const PREMIUM_ENTITLEMENT_ID = 'premium';
 
 const RC_API_KEY = process.env.EXPO_PUBLIC_RC_API_KEY ?? '';
@@ -28,6 +30,30 @@ export function configureRevenueCat(appUserId?: string): void {
 
 export function isRevenueCatConfigured(): boolean {
   return configured;
+}
+
+/**
+ * Kill switch remoto do paywall (`app_config.paywall_enabled`) — mesmo padrão
+ * do `ai_enabled`. Previsto no plano da Fase 5 e nascido `false` na migration
+ * 006, mas até 2026-07-12 NADA no app o consultava: o paywall aparecia mesmo
+ * sem oferta configurada, e o usuário batia num "Assinatura ainda não
+ * disponível" logo no primeiro dia.
+ *
+ * Em qualquer falha de leitura, assume DESLIGADO (estado seguro: nunca
+ * empurrar uma tela de compra que não fecha compra).
+ */
+export async function isPaywallEnabled(): Promise<boolean> {
+  if (!configured) return false; // sem RevenueCat, não há o que vender
+  try {
+    const { data } = await supabase
+      .from('app_config')
+      .select('value')
+      .eq('key', 'paywall_enabled')
+      .maybeSingle();
+    return data?.value === 'true';
+  } catch {
+    return false;
+  }
 }
 
 function isEntitlementActive(info: CustomerInfo): boolean {

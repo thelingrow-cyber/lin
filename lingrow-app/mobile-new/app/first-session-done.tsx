@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Analytics } from '@/lib/analytics';
 import { FLAG_PAYWALL_D0_SHOWN, getFlag, setFlag } from '@/lib/flags';
 import { requestNotificationPermission, scheduleNextReviewNotification } from '@/lib/notifications';
+import { isPaywallEnabled } from '@/lib/premium';
 import { colors, fonts, radius, shadow, spacing } from '@/theme';
 
 export default function FirstSessionDoneScreen() {
@@ -42,11 +43,20 @@ export default function FirstSessionDoneScreen() {
     if (leaving) return;
     setLeaving(true);
 
-    const alreadyShown = await getFlag(FLAG_PAYWALL_D0_SHOWN);
-    if (alreadyShown) {
+    // Só apresenta o paywall Day-0 se ele REALMENTE puder vender: RevenueCat
+    // configurado + kill switch remoto ligado. Sem isso, mostrar a tela de
+    // compra seria entregar um botão que responde "assinatura indisponível"
+    // no primeiro dia de uso — pior que não mostrar nada.
+    const [alreadyShown, paywallLive] = await Promise.all([
+      getFlag(FLAG_PAYWALL_D0_SHOWN),
+      isPaywallEnabled(),
+    ]);
+
+    if (alreadyShown || !paywallLive) {
       router.replace('/(tabs)');
       return;
     }
+
     await setFlag(FLAG_PAYWALL_D0_SHOWN);
     // paywall Day-0 (E2.4): 1 única vez, com fechar visível; ao sair, home.
     router.replace({ pathname: '/paywall', params: { context: 'onboarding' } } as unknown as Href);
