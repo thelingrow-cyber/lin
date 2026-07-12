@@ -475,10 +475,29 @@ export async function getStudySession(
   ).length;
   const remainingToday = Math.max(0, settings.dailyGoal - newStudiedToday);
 
-  const newCards = cards
-    .filter((c) => !studied.has(c.id))
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .slice(0, isBuiltIn ? remainingToday : undefined);
+  // O ponto de entrada do usuário (declarado no onboarding) vale para TODA a
+  // jornada, não só para a primeira sessão. Sem isso, quem disse "travo na hora
+  // de usar" começava na frase 150 no dia 0 e era jogado de volta na frase 1 no
+  // dia 1 — a personalização evaporava e o app voltava a ser "She has a dog".
+  //
+  // As frases anteriores ao ponto de entrada NÃO são perdidas: elas vão para o
+  // FIM da fila. Quando o usuário esgotar as frases do nível dele, elas voltam
+  // naturalmente. (O placement test da E1.4 refina isso e dá o botão explícito
+  // de "revisar do início".)
+  const entryPosition = isBuiltIn
+    ? FIRST_SESSION_START[settings.levelSelfreport ?? 'zero']
+    : 1;
+
+  const unseen = cards.filter((c) => !studied.has(c.id));
+  const byPosition = (a: Card, b: Card) => (a.position ?? 0) - (b.position ?? 0);
+
+  const fromEntryPoint = unseen.filter((c) => c.position >= entryPosition).sort(byPosition);
+  const skipped = unseen.filter((c) => c.position < entryPosition).sort(byPosition);
+
+  const newCards = [...fromEntryPoint, ...skipped].slice(
+    0,
+    isBuiltIn ? remainingToday : undefined
+  );
 
   return [...toReview, ...newCards];
 }

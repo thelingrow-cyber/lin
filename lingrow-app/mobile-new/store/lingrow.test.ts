@@ -252,3 +252,37 @@ describe('getStudySession — primeira sessão do onboarding (E2.3)', () => {
     expect(session[0].position).toBe(1);
   });
 });
+
+describe('getStudySession — o ponto de entrada vale para a jornada inteira', () => {
+  beforeEach(() => __resetSettingsRows());
+
+  it('quem declarou "stuck" NÃO é jogado de volta à frase 1 na sessão seguinte', async () => {
+    await saveSettings({ levelSelfreport: 'stuck', dailyGoal: 5 });
+    const session = await getStudySession(DECK_1000.id);
+    // sem o piso, isto voltaria [1,2,3,4,5] — e a personalização morreria no dia 1
+    expect(session.map((c) => c.position)).toEqual([150, 151, 152, 153, 154]);
+  });
+
+  it('"fluency" entra na 300 também na sessão normal', async () => {
+    await saveSettings({ levelSelfreport: 'fluency', dailyGoal: 5 });
+    const session = await getStudySession(DECK_1000.id);
+    expect(session[0].position).toBe(300);
+  });
+
+  it('usuário legado (sem nível declarado) começa na frase 1, como sempre', async () => {
+    await saveSettings({ dailyGoal: 5 });
+    const session = await getStudySession(DECK_1000.id);
+    expect(session[0].position).toBe(1);
+  });
+
+  it('as frases puladas não somem — vão para o fim da fila e voltam depois', async () => {
+    // meta gigante força a sessão a varrer todo o catálogo de uma vez
+    await saveSettings({ levelSelfreport: 'fluency', dailyGoal: 9999 });
+    const session = await getStudySession(DECK_1000.id);
+    const positions = session.map((c) => c.position);
+
+    expect(positions[0]).toBe(300); // começa no ponto de entrada
+    expect(positions).toContain(1); // a frase 1 continua acessível…
+    expect(positions.indexOf(1)).toBeGreaterThan(positions.indexOf(399)); // …mas só depois
+  });
+});
