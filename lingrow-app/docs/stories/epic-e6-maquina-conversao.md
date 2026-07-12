@@ -64,9 +64,9 @@ A projeção é aritmética transparente (dailyGoal × 30) — nada de estatíst
 7. Typecheck + lint + testes passam; fluxo de usuário existente (onboardingDone=true) intocado.
 
 ### Tasks
-- [ ] Tela `plan-reveal.tsx` (2 fases, textos exatos, reduce-motion)
-- [ ] Integração no stepper do E2.2 → handoff para E2.3
-- [ ] Analytics + funil no PostHog
+- [x] Tela `plan-reveal.tsx` (2 fases, textos exatos, reduce-motion)
+- [x] Integração no stepper do E2.2 (handoff final para a sessão do E2.3 marcado como TODO no código — hoje navega para a home até E2.3 existir)
+- [x] Analytics (plan_reveal_viewed/skipped_animation/continue) — montar o painel do funil no PostHog quando houver dados
 - [ ] QA manual Expo Go: 5 combinações de goal/level, tap-skip, reduce-motion, offline
 
 ---

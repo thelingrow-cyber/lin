@@ -79,12 +79,12 @@ E6.5b screenshots (Uma) ── SÓ depois de E2+E6.1 prontos (app novo na tela) 
 
 | Story | Status |
 |-------|--------|
-| E2.1 | — |
-| E2.2 | — |
-| E6.1 | — |
-| E2.3 | — |
+| E2.1 | ✅ código completo (2026-07-12): migration 007 + rollback escritas, store estendido, 15/15 testes · ⏳ `db push` em produção aguarda confirmação do fundador |
+| E2.2 | ✅ implementado (2026-07-12): onboarding 4 passos + analytics + modal de meta só para legados · ⏳ QA manual Expo Go |
+| E6.1 | ✅ implementado (2026-07-12): plan-reveal 2 fases + analytics · handoff para sessão do E2.3 = TODO no código · ⏳ QA manual |
+| E2.3 | — próximo elo (@dev) |
 | E2.4 | — |
-| E6.5a (ficha) | — |
+| E6.5a (ficha) | — pode iniciar em paralelo (@pm) |
 | E6.5b (screenshots) | — |
 | Gate release | — |
 

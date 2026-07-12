@@ -51,6 +51,11 @@ export interface CardProgress {
   createdAt?: string;
 }
 
+/** Objetivo declarado no onboarding (FR-A1a). NULL = usuário anterior ao onboarding v2. */
+export type LearningGoal = 'work' | 'travel' | 'study' | 'abroad' | 'self';
+/** Autoavaliação de nível no onboarding (FR-A1b). NULL = usuário anterior ao onboarding v2. */
+export type LevelSelfReport = 'zero' | 'stuck' | 'fluency';
+
 export interface UserSettings {
   onboardingDone: boolean;
   dailyGoal: number;
@@ -59,6 +64,9 @@ export interface UserSettings {
   autoPlay: boolean;
   voiceVariant: string;
   playbackSpeed: number;
+  goal: LearningGoal | null;
+  levelSelfreport: LevelSelfReport | null;
+  onboardingVersion: string | null;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -69,6 +77,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   autoPlay: false,
   voiceVariant: 'en-US',
   playbackSpeed: 1.0,
+  goal: null,
+  levelSelfreport: null,
+  onboardingVersion: null,
 };
 
 async function getUserId(): Promise<string> {
@@ -104,6 +115,9 @@ export async function getSettings(overrideUserId?: string): Promise<UserSettings
     autoPlay: data.auto_play_audio,
     voiceVariant: data.voice_variant,
     playbackSpeed: data.playback_speed,
+    goal: data.goal ?? null,
+    levelSelfreport: data.level_selfreport ?? null,
+    onboardingVersion: data.onboarding_version ?? null,
   };
 }
 
@@ -124,6 +138,9 @@ export async function saveSettings(settings: Partial<UserSettings>): Promise<voi
   if (settings.autoPlay !== undefined) patch.auto_play_audio = settings.autoPlay;
   if (settings.voiceVariant !== undefined) patch.voice_variant = settings.voiceVariant;
   if (settings.playbackSpeed !== undefined) patch.playback_speed = settings.playbackSpeed;
+  if (settings.goal !== undefined) patch.goal = settings.goal;
+  if (settings.levelSelfreport !== undefined) patch.level_selfreport = settings.levelSelfreport;
+  if (settings.onboardingVersion !== undefined) patch.onboarding_version = settings.onboardingVersion;
 
   const { error } = await supabase.from('user_settings').upsert(patch, { onConflict: 'user_id' });
   if (error) throw error;

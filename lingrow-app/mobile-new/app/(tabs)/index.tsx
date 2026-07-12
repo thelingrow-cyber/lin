@@ -117,7 +117,9 @@ export default function HomeScreen() {
   }, [load]));
 
   const startStudy = () => {
-    if (learnedCount > 0) {
+    // quem completou o onboarding v2 já definiu a meta lá (E2.2 AC3) — o modal
+    // segue existindo APENAS para usuários legados sem meta definida
+    if (learnedCount > 0 || settings?.onboardingVersion) {
       router.push({ pathname: '/study/[deckId]', params: { deckId: DECK_1000.id } });
     } else {
       setShowGoalModal(true);

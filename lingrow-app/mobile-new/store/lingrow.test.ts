@@ -1,4 +1,37 @@
-import { computeNextReview, CardProgress, SRSAnswer } from './lingrow';
+import { computeNextReview, getSettings, saveSettings, CardProgress, SRSAnswer } from './lingrow';
+
+// Mock em memória do supabase — cobre apenas o que getSettings/saveSettings
+// usam (auth.getSession, select().eq().maybeSingle(), upsert). Os testes de
+// computeNextReview não tocam rede, então o mock global não os afeta.
+jest.mock('@/lib/supabase', () => {
+  const rows: Record<string, Record<string, unknown>> = {};
+  return {
+    __resetSettingsRows: () => {
+      for (const k of Object.keys(rows)) delete rows[k];
+    },
+    supabase: {
+      auth: {
+        getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }),
+      },
+      from: (_table: string) => ({
+        select: (_cols?: string) => ({
+          eq: (_col: string, val: string) => ({
+            maybeSingle: async () => ({ data: rows[val] ?? null, error: null }),
+          }),
+        }),
+        upsert: async (patch: Record<string, unknown>) => {
+          const key = String(patch.user_id);
+          rows[key] = { ...(rows[key] ?? {}), ...patch };
+          return { error: null };
+        },
+      }),
+    },
+  };
+});
+
+const { __resetSettingsRows } = jest.requireMock('@/lib/supabase') as {
+  __resetSettingsRows: () => void;
+};
 
 const baseProgress = (overrides: Partial<CardProgress> = {}): CardProgress => ({
   cardId: 'card-1',
@@ -133,5 +166,43 @@ describe('computeNextReview (algoritmo SRS)', () => {
     const lastReview = new Date(result.lastReview!).getTime();
     expect(lastReview).toBeGreaterThanOrEqual(before);
     expect(lastReview).toBeLessThanOrEqual(Date.now());
+  });
+});
+
+describe('getSettings/saveSettings — perfil de aprendizado (E2.1, migration 007)', () => {
+  beforeEach(() => __resetSettingsRows());
+
+  it('usuário sem linha: defaults com goal/levelSelfreport/onboardingVersion nulos', async () => {
+    const s = await getSettings();
+    expect(s.onboardingDone).toBe(false);
+    expect(s.goal).toBeNull();
+    expect(s.levelSelfreport).toBeNull();
+    expect(s.onboardingVersion).toBeNull();
+  });
+
+  it('roundtrip: salva goal+level+versão e lê de volta os mesmos valores', async () => {
+    await saveSettings({
+      goal: 'work',
+      levelSelfreport: 'stuck',
+      dailyGoal: 10,
+      onboardingVersion: 'v2',
+      onboardingDone: true,
+    });
+    const s = await getSettings();
+    expect(s.goal).toBe('work');
+    expect(s.levelSelfreport).toBe('stuck');
+    expect(s.dailyGoal).toBe(10);
+    expect(s.onboardingVersion).toBe('v2');
+    expect(s.onboardingDone).toBe(true);
+  });
+
+  it('upsert parcial preservado: salvar só streak não apaga o perfil de aprendizado', async () => {
+    await saveSettings({ goal: 'travel', levelSelfreport: 'zero', onboardingVersion: 'v2' });
+    await saveSettings({ streak: 7 });
+    const s = await getSettings();
+    expect(s.streak).toBe(7);
+    expect(s.goal).toBe('travel');
+    expect(s.levelSelfreport).toBe('zero');
+    expect(s.onboardingVersion).toBe('v2');
   });
 });

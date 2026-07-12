@@ -32,10 +32,10 @@
 5. Teste: salvar/ler goal+level roundtrip em `store/lingrow.test.ts`.
 
 ### Tasks
-- [ ] Escrever migration 007 + rollback
-- [ ] Aplicar em produção (`supabase db push`) — snapshot antes
-- [ ] Estender types + getSettings/saveSettings
-- [ ] Teste unitário roundtrip
+- [x] Escrever migration 007 + rollback
+- [ ] Aplicar em produção (`supabase db push`) — snapshot antes ⏳ aguardando confirmação do fundador
+- [x] Estender types + getSettings/saveSettings
+- [x] Teste unitário roundtrip (3 testes: defaults, roundtrip, upsert parcial)
 
 ---
 
@@ -69,9 +69,9 @@
 6. Typecheck + lint + testes passam; nenhuma regressão no fluxo de usuário existente (onboardingDone=true pula tudo, como hoje).
 
 ### Tasks
-- [ ] Reescrever `app/onboarding.tsx` (4 passos, estado local, textos exatos acima)
-- [ ] Remover trigger do modal de meta para novos usuários (manter para legados)
-- [ ] Analytics por passo (E2.4)
+- [x] Reescrever `app/onboarding.tsx` (4 passos, estado local, textos exatos acima)
+- [x] Remover trigger do modal de meta para novos usuários (manter para legados — condição `onboardingVersion` na home)
+- [x] Analytics por passo (onboarding_started/step_completed/completed com onboarding_version)
 - [ ] QA manual no Expo Go (fluxo novo + fluxo usuário existente)
 
 ---
