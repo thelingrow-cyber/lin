@@ -1,5 +1,51 @@
 # RevenueCat + App Store Connect — Checklist do Fundador
 
+---
+
+## 🔖 ESTADO REAL DO SETUP (atualizado 2026-07-13, fim da sessão)
+
+### ✅ Feito na Apple
+- Contrato de Licença do Programa Apple Developer: **aceito**
+- Grupo de assinaturas **`Lingrow Premium`** criado (ID do grupo: `22229160`)
+- **2 assinaturas criadas, no MESMO grupo**, com preço, disponibilidade, idioma (PT-BR) e oferta introdutória (grátis, 2 semanas, sem data de término):
+
+| Nível | Nome de referência | **ID do produto (string EXATA)** | Duração | Preço |
+|---|---|---|---|---|
+| 1 | Lingrow Premium Ano | `com.lingrow.flashcardss.premium.annual` ⚠️ | 1 ano | R$ 179,90 |
+| 2 | Lingrow Premium Mensal | `com.lingrow.flashcards.premium.monthly` | 1 mês | R$ 24,90 |
+
+> ⚠️ **O ID do anual tem "flashcard**ss**" com dois S.** NÃO é erro a corrigir — IDs da Apple são permanentes e o ID "correto" já foi queimado numa tentativa anterior. O ID é interno (cliente nunca vê) e funciona normalmente. **Use essa string exata no RevenueCat.**
+
+### 🔴 BLOQUEIO ATIVO — o contrato de apps pagos
+Status do "Acordo de apps pagos": **Novo** (não assinado). Sem ele, **nenhuma compra funciona — nem em sandbox**.
+
+A Apple não deixa nem solicitar o contrato antes de resolver 2 avisos na página **Negócios**:
+1. 🔵 *"Você deve atualizar as informações da sua pessoa jurídica antes de assinar o contrato de apps pagos"* → link **"Editar pessoa jurídica"** (entidade: MATEUS ALEXANDRO SOUZA SILVA, pessoa física, Manaus/AM)
+2. 🔴 *DSA / União Europeia* — declarar se é comerciante (trader) → link **"Complete os requisitos de conformidade"**. Como vamos cobrar, a resposta é **sim, comerciante** (exige dados de contato públicos na App Store da UE). **Alternativa:** não distribuir na UE por ora — decisão do fundador.
+
+Depois disso: assinar o contrato + **dados bancários** (titular tem que bater com a conta Apple) + **formulários fiscais** (W-8BEN dos EUA — sem ele a Apple retém 30%). Validação da Apple leva de horas a ~2 dias.
+
+### 🟡 Em andamento no RevenueCat
+- Projeto **`Lingrow`** criado. ⚠️ E-mail da conta ainda **não confirmado** (clicar no link do e-mail).
+- Parou em: **New App Store app** — falta preencher Bundle ID `com.lingrow.flashcards` e subir o arquivo **`.p8`** (Chave de Compra no App).
+- **Chaves da Apple ainda pendentes de gerar:**
+  - `.p8` — App Store Connect → Usuários e Acesso → aba **Integrações** → **Compra no app** → `+` → baixar (**só baixa 1 vez**)
+  - **Segredo compartilhado específico do app** — página do app → Geral → Informações do app → final da página
+
+### ▶️ PRÓXIMO PASSO EXATO
+1. Gerar as 2 chaves da Apple (acima)
+2. Terminar o "New App Store app" no RevenueCat
+3. Seguir as Partes 2.2 a 2.6 deste checklist (produtos → entitlement `premium` → offering `default` com pacotes **Monthly/Annual padrão** → Public SDK Key `appl_...` → webhook)
+4. Mandar ao Claude: a **Public SDK Key** + o **segredo do webhook** inventado
+5. Em paralelo: destravar o contrato de apps pagos (é o que segura o lançamento)
+
+### ⏳ Pendências do lado do código (Claude faz quando receber as chaves)
+- `EXPO_PUBLIC_RC_API_KEY` no EAS · `supabase secrets set REVENUECAT_WEBHOOK_SECRET` · deploy da function `revenuecat-webhook` · `app_config.paywall_enabled = 'true'` · build EAS · teste sandbox
+- **Captura de tela da assinatura** (exigida pela Apple para revisão): tirar do paywall quando o build existir e subir no App Store Connect
+
+---
+
+
 | Campo | Valor |
 |-------|-------|
 | Data | 2026-07-12 |
