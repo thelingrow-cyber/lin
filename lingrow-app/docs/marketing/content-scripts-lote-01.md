@@ -23,7 +23,7 @@
 
 ## DIA 1 — Educativo (A) · faceless · 27-35s
 
-**GANCHO:** *"5 frases em inglês que você usa toda semana no trabalho — e provavelmente fala erradas."*
+**GANCHO:** *"5 frases em inglês que você usa toda semana no trabalho e provavelmente fala errado"*
 
 **ROTEIRO (fala):**
 "Presta atenção nessas cinco, porque quase todo brasileiro erra.

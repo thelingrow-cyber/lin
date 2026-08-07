@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Lingrow, Instagram lote 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /*
+    v4. Fora os prints de tela cheia: em light mode dentro de slide dark eles chocam,
+    e reduzidos ficam ilegiveis. O CARD do app vira a ancora visual, desenhado em
+    tamanho que le. E a linguagem do produto sem parecer captura de suporte tecnico.
+
+    Pesquisa aplicada: ancora visual em todo slide, 15 a 20 palavras, continuidade
+    (barra de progresso + card cortado na borda), contraste lado a lado.
+  */
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root{
+    --roxo:#7C3AED;
+    --lilas:#F0ABFC;
+    --fundo:#0F0A1E;
+    --branco:#FFFFFF;
+    --cinza:#8E85A6;
+    --cinza-fraco:#5A5270;
+    --linha:rgba(255,255,255,.10);
+  }
+
+  body{ background:#2A2A2A; font-family:'Inter',sans-serif; }
+
+  .slide{
+    position:relative;
+    width:1080px; height:1350px;
+    background:var(--fundo); color:var(--branco);
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    padding:76px 76px 70px;
+    margin:0 auto 40px;
+  }
+
+  .prog{ position:absolute; top:0; left:0; height:8px; background:var(--roxo); }
+
+  .topo{
+    display:flex; align-items:baseline; justify-content:space-between;
+    font-family:'Plus Jakarta Sans',sans-serif; position:relative; z-index:2;
+  }
+  .marca{ font-weight:800; font-size:28px; letter-spacing:-.01em; }
+  .num{ font-weight:700; font-size:21px; color:var(--cinza-fraco); letter-spacing:.1em; }
+
+  .miolo{ margin-top:70px; position:relative; z-index:2; }
+  .miolo.centro{ margin-top:auto; margin-bottom:auto; }
+  /* com o miolo centralizado o rodape nao pode disputar o espaco livre,
+     senao o conteudo sobe demais e sobra vazio embaixo */
+  .miolo.centro ~ .rodape{ margin-top:0; }
+
+  h1{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+      font-size:94px; line-height:1.02; letter-spacing:-.04em; }
+  h2{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+      font-size:66px; line-height:1.08; letter-spacing:-.03em; }
+  h3{ font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+      font-size:48px; line-height:1.12; letter-spacing:-.02em; }
+  .lilas{ color:var(--lilas); }
+
+  p.apoio{ font-size:34px; line-height:1.45; color:var(--cinza); margin-top:26px; max-width:830px; }
+  p.apoio strong{ color:var(--branco); font-weight:600; }
+
+  .rodape{
+    margin-top:auto; display:flex; justify-content:space-between; align-items:center;
+    font-size:22px; color:var(--cinza-fraco); font-weight:500;
+    position:relative; z-index:2;
+  }
+  .rodape .esq{ letter-spacing:.06em; }
+
+  /* ======== O CARD: unidade visual da marca ======== */
+  .card{
+    background:#FFFFFF; color:#111827;
+    border-radius:36px; padding:52px 52px 56px;
+    min-height:280px;
+    display:flex; flex-direction:column;
+    box-shadow:0 34px 80px rgba(0,0,0,.5);
+  }
+  .card .rot{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:20px; font-weight:700; letter-spacing:.22em;
+    color:#9CA3AF; margin-bottom:auto;
+  }
+  .card .frase{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-weight:800; font-size:56px; line-height:1.16; letter-spacing:-.02em;
+    margin-top:32px;
+  }
+  .card .frase em{ color:var(--roxo); font-style:normal; }
+  .card .trad{ margin-top:18px; font-size:30px; color:#6B7280; }
+  .card.apagado{ background:#D8D4E2; box-shadow:none; }
+  .card.apagado .rot{ color:#8B8598; }
+  .card.apagado .frase{ text-decoration:line-through; text-decoration-thickness:5px; color:#6B6579; }
+
+  /* card cortado pela lateral: o corte compele o swipe sem invadir o rodape.
+     NAO usar no ultimo slide: la nao ha mais swipe, o corte so abre um vazio morto */
+  .card-corte{
+    position:absolute; right:-120px; bottom:172px; width:620px; z-index:1;
+    transform:rotate(-6deg);
+  }
+
+  /* slide de fechamento: bloco inteiro centrado, card completo, comporta-se como cartaz */
+  .slide.final .miolo{ margin-top:auto; margin-bottom:auto; }
+  .slide.final ~ .rodape, .slide.final .rodape{ margin-top:0; }
+  .slide.final .card{ margin-top:52px; min-height:0; padding:44px 48px 48px; }
+
+  /* variacao: card de deck com progresso */
+  .card .deck-nome{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:44px; letter-spacing:-.02em; margin-bottom:14px;
+  }
+  .card .deck-sub{ font-size:28px; color:#6B7280; margin-bottom:34px; }
+  .card .barra-ext{ height:16px; background:#EDEAF5; border-radius:99px; overflow:hidden; }
+  .card .barra-int{ height:100%; background:var(--roxo); border-radius:99px; }
+  .card .deck-meta{
+    display:flex; justify-content:space-between; margin-top:20px;
+    font-size:26px; color:#6B7280; font-weight:500;
+  }
+  .card .deck-meta b{ color:var(--roxo); }
+
+  /* variacao: card conquistado */
+  .card .selo-ok{
+    display:inline-flex; align-items:center; gap:12px;
+    background:#EDE7FE; color:var(--roxo);
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;
+    font-size:24px; letter-spacing:.06em;
+    padding:14px 26px; border-radius:99px; align-self:flex-start;
+    margin-top:30px;
+  }
+
+  .duo{ display:flex; flex-direction:column; gap:30px; margin-top:40px; }
+  .selo{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;
+    font-size:22px; letter-spacing:.16em; margin-bottom:14px; display:block;
+  }
+  .selo.x{ color:var(--cinza-fraco); }
+  .selo.v{ color:var(--lilas); }
+
+  /* ======== contraste lado a lado ======== */
+  .versus{ display:flex; margin-top:52px; border-radius:32px; overflow:hidden; }
+  .versus > div{ flex:1; padding:54px 44px; }
+  .versus .lado-a{ background:#1A1330; }
+  .versus .lado-b{ background:var(--roxo); }
+  .versus .rot{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;
+    font-size:21px; letter-spacing:.18em; margin-bottom:22px; opacity:.75;
+  }
+  .versus .val{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:60px; line-height:1.05; letter-spacing:-.03em;
+  }
+  .versus .sub{ margin-top:18px; font-size:27px; line-height:1.35; opacity:.82; }
+
+  /* ======== numero gigante ======== */
+  .numerao{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:290px; line-height:.85; letter-spacing:-.06em;
+    color:var(--roxo); margin-bottom:12px;
+  }
+
+  /* ======== passos ======== */
+  .passo{ display:flex; align-items:center; gap:56px; }
+  .passo .txt{ flex:1; }
+  .passo .n{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800;
+    font-size:88px; color:var(--roxo); line-height:1; margin-bottom:16px;
+  }
+  .passo .card{ width:440px; flex:0 0 auto; min-height:300px; padding:44px; }
+  .passo .card .frase{ font-size:44px; }
+  .passo .card .deck-nome{ font-size:36px; }
+
+  /* ======== cola final ======== */
+  ul.cola{ list-style:none; margin-top:44px; }
+  ul.cola li{ display:flex; align-items:baseline; gap:20px; padding:24px 0; font-size:34px; }
+  ul.cola li + li{ border-top:2px solid var(--linha); }
+  ul.cola .x{ color:var(--cinza-fraco); text-decoration:line-through; }
+  ul.cola .s{ color:var(--roxo); font-weight:700; }
+  ul.cola .v{ color:var(--branco); font-weight:600; }
+
+  .botao{
+    display:inline-block; background:var(--roxo); color:var(--branco);
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:38px;
+    padding:30px 52px; border-radius:99px; margin-top:42px;
+  }
+
+
+  /* ======== POST MANIFESTO: fundo invertido, quebra o ritmo do grid ======== */
+  .slide.claro{ background:#FAFAFA; color:#0D0D0D; }
+  .slide.claro .marca{ color:#0D0D0D; }
+  .slide.claro .num{ color:#A9A2BC; }
+  .slide.claro .rodape{ color:#A9A2BC; }
+  .slide.claro .lilas{ color:var(--roxo); }
+  .slide.claro .barra-manifesto{
+    width:132px; height:12px; background:var(--roxo);
+    border-radius:99px; margin-bottom:56px;
+  }
+  .slide.claro .assinatura{
+    margin-top:56px; font-family:'Plus Jakarta Sans',sans-serif;
+    font-weight:700; font-size:30px; color:#6B6579;
+  }
+
+
+  .slide.claro .aparte{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;
+    font-size:52px; letter-spacing:-.02em; color:var(--roxo);
+    margin-top:26px;
+  }
+
+  body.solo .slide{ display:none; margin:0; }
+  body.solo .slide.ativo{ display:flex; }
+</style>
+</head>
+<body>
+
+<!-- ============ C1: O INIMIGO FILOSOFICO ============ -->
+
+<section class="slide" id="c1s1">
+  <div class="prog" style="width:16.6%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">01/06</div></div>
+  <div class="miolo">
+    <h1>A indústria de inglês lucra com o seu <span class="lilas">recomeço</span></h1>
+  </div>
+  <div class="card card-corte">
+    <div class="rot">FRENTE</div>
+    <div class="frase">I'll <em>start over</em> next month</div>
+    <div class="trad">Eu recomeço mês que vem</div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c1s2">
+  <div class="prog" style="width:33.3%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">02/06</div></div>
+  <div class="miolo centro">
+    <h2>Um aluno que aprende de verdade <span class="lilas">para de pagar</span></h2>
+    <div class="versus">
+      <div class="lado-a">
+        <div class="rot">O QUE VENDEM</div>
+        <div class="val">Mais um<br/>mês</div>
+        <div class="sub">Assinatura que renova enquanto você não chega lá</div>
+      </div>
+      <div class="lado-b">
+        <div class="rot">O QUE VOCÊ QUER</div>
+        <div class="val">Não<br/>precisar</div>
+        <div class="sub">Aprender de vez e sair do ciclo</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c1s3">
+  <div class="prog" style="width:50%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">03/06</div></div>
+  <div class="miolo centro">
+    <h2>Em 48 horas o vocabulário some</h2>
+    <p class="apoio">Você sentiu que evoluiu. O cérebro não recebeu ordem nenhuma de guardar</p>
+    <div style="margin-top:52px">
+      <svg viewBox="0 0 920 380" width="100%" height="380">
+        <line x1="0" y1="360" x2="920" y2="360" stroke="#2E2647" stroke-width="3"/>
+        <path d="M0,30 C110,190 250,290 470,322 C650,348 790,356 920,358"
+              fill="none" stroke="#5A5270" stroke-width="8" stroke-linecap="round"/>
+        <path d="M0,30 C70,90 120,120 190,120 C190,120 200,60 270,58
+                 C340,56 350,140 430,150 C430,150 450,70 530,68
+                 C620,66 630,170 720,176 C720,176 740,80 830,80 L920,84"
+              fill="none" stroke="#F0ABFC" stroke-width="9" stroke-linecap="round"/>
+        <circle cx="190" cy="120" r="12" fill="#7C3AED"/>
+        <circle cx="430" cy="150" r="12" fill="#7C3AED"/>
+        <circle cx="720" cy="176" r="12" fill="#7C3AED"/>
+      </svg>
+      <div style="display:flex; gap:48px; margin-top:24px; font-size:27px; color:#8E85A6">
+        <span><span style="display:inline-block;width:32px;height:8px;background:#5A5270;border-radius:9px;vertical-align:middle;margin-right:14px"></span>sem revisar</span>
+        <span><span style="display:inline-block;width:32px;height:8px;background:#F0ABFC;border-radius:9px;vertical-align:middle;margin-right:14px"></span>com a Lingrow</span>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c1s4">
+  <div class="prog" style="width:66.6%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">04/06</div></div>
+  <div class="miolo">
+    <h1>Você não falhou</h1>
+    <h1 class="lilas" style="margin-top:10px">Você foi mantido no loop</h1>
+  </div>
+  <div class="card card-corte">
+    <div class="rot">VERSO</div>
+    <div class="frase">It was never <em>your fault</em></div>
+    <div class="trad">A culpa nunca foi sua</div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c1s5">
+  <div class="prog" style="width:83.3%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">05/06</div></div>
+  <div class="miolo centro">
+    <h2>A Lingrow te devolve a frase <span class="lilas">antes</span> de você esquecer</h2>
+    <p class="apoio">Você não decide o que revisar. O app calcula o momento e coloca na sua frente</p>
+    <div class="card" style="margin-top:48px">
+      <div class="rot">HOJE, 5 CARDS</div>
+      <div class="frase">We watch <em>movies</em> on weekends</div>
+      <div class="trad">A gente assiste filmes nos fins de semana</div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide final" id="c1s6">
+  <div class="prog" style="width:100%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">06/06</div></div>
+  <div class="miolo">
+    <h1>Inglês que <span class="lilas">não some</span></h1>
+    <p class="apoio">Para quem não aceita mais voltar do zero</p>
+    <div class="card">
+      <div class="rot">SEU PROGRESSO</div>
+      <div class="deck-nome" style="margin-top:26px">1000 Frases Essenciais</div>
+      <div class="barra-ext"><div class="barra-int" style="width:34%"></div></div>
+      <div class="deck-meta"><span>340 frases conquistadas</span><b>34%</b></div>
+    </div>
+    <div class="botao">Grátis na App Store</div>
+  </div>
+  <div class="rodape"><span class="esq">salva esse post</span><span>@lingrowoficial</span></div>
+</section>
+
+<!-- ============ C2: 5 FRASES QUE VOCE FALA ERRADO ============ -->
+
+<section class="slide" id="c2s1">
+  <div class="prog" style="width:14.2%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">01/07</div></div>
+  <div class="miolo">
+    <h1>5 frases que você usa no trabalho e fala <span class="lilas">errado</span></h1>
+    <p class="apoio">A quarta é a que mais causa mal-entendido</p>
+  </div>
+  <div class="card card-corte apagado">
+    <div class="rot">FRENTE</div>
+    <div class="frase">I have 30 years</div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c2s2">
+  <div class="prog" style="width:28.5%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">02/07</div></div>
+  <div class="miolo centro">
+    <h3>Falar a idade</h3>
+    <div class="duo">
+      <div>
+        <span class="selo x">VOCÊ FALA</span>
+        <div class="card apagado"><div class="rot">FRENTE</div><div class="frase">I have 30 years</div></div>
+      </div>
+      <div>
+        <span class="selo v">O CERTO</span>
+        <div class="card"><div class="rot">FRENTE</div><div class="frase">I'm 30 <em>years old</em></div><div class="trad">Eu tenho 30 anos</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">em inglês você é a idade, não tem</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c2s3">
+  <div class="prog" style="width:42.8%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">03/07</div></div>
+  <div class="miolo centro">
+    <h3>Fazer uma pergunta</h3>
+    <div class="duo">
+      <div>
+        <span class="selo x">VOCÊ FALA</span>
+        <div class="card apagado"><div class="rot">FRENTE</div><div class="frase">Make a question</div></div>
+      </div>
+      <div>
+        <span class="selo v">O CERTO</span>
+        <div class="card"><div class="rot">FRENTE</div><div class="frase"><em>Ask</em> a question</div><div class="trad">Fazer uma pergunta</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">pergunta não se faz, se pede</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c2s4">
+  <div class="prog" style="width:57.1%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">04/07</div></div>
+  <div class="miolo centro">
+    <h3>Tenho uma dúvida</h3>
+    <div class="duo">
+      <div>
+        <span class="selo x">SOA ESTRANHO</span>
+        <div class="card apagado"><div class="rot">FRENTE</div><div class="frase">I have doubt</div></div>
+      </div>
+      <div>
+        <span class="selo v">O NATURAL</span>
+        <div class="card"><div class="rot">FRENTE</div><div class="frase">I have a <em>question</em></div><div class="trad">Tenho uma dúvida</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">doubt é desconfiança</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c2s5">
+  <div class="prog" style="width:71.4%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">05/07</div></div>
+  <div class="miolo centro">
+    <h3>O falso amigo perigoso</h3>
+    <div class="duo">
+      <div>
+        <span class="selo x">VOCÊ FALA</span>
+        <div class="card apagado"><div class="rot">FRENTE</div><div class="frase">I pretend to travel</div></div>
+      </div>
+      <div>
+        <span class="selo v">O CERTO</span>
+        <div class="card"><div class="rot">FRENTE</div><div class="frase">I <em>plan</em> to travel</div><div class="trad">Pretendo viajar</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">pretend é fingir</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c2s6">
+  <div class="prog" style="width:85.7%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">06/07</div></div>
+  <div class="miolo centro">
+    <h3>O mais confundido de todos</h3>
+    <div class="duo">
+      <div>
+        <span class="selo x">NÃO É</span>
+        <div class="card apagado"><div class="rot">VERSO</div><div class="frase">Actually = atualmente</div></div>
+      </div>
+      <div>
+        <span class="selo v">É</span>
+        <div class="card"><div class="rot">VERSO</div><div class="frase">Actually = <em>na verdade</em></div><div class="trad">atualmente é currently</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">troque os dois e a frase muda</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide final" id="c2s7">
+  <div class="prog" style="width:100%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">07/07</div></div>
+  <div class="miolo">
+    <h2>Salva as 5 antes de esquecer</h2>
+    <ul class="cola">
+      <li><span class="x">I have 30 years</span><span class="s">›</span><span class="v">I'm 30 years old</span></li>
+      <li><span class="x">Make a question</span><span class="s">›</span><span class="v">Ask a question</span></li>
+      <li><span class="x">I have doubt</span><span class="s">›</span><span class="v">I have a question</span></li>
+      <li><span class="x">I pretend to</span><span class="s">›</span><span class="v">I plan to</span></li>
+      <li><span class="x">Actually = atualmente</span><span class="s">›</span><span class="v">na verdade</span></li>
+    </ul>
+    <p class="apoio">Semana que vem você esquece três dessas. A Lingrow te devolve elas na hora certa</p>
+  </div>
+  <div class="rodape"><span class="esq">salva esse post</span><span>@lingrowoficial</span></div>
+</section>
+
+<!-- ============ C3: ESTUDAR NAO E CONQUISTAR ============ -->
+
+<section class="slide" id="c3s1">
+  <div class="prog" style="width:16.6%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">01/06</div></div>
+  <div class="miolo">
+    <h1>Estudar não é <span class="lilas">conquistar</span></h1>
+  </div>
+  <div class="card card-corte">
+    <div class="rot">VERSO</div>
+    <div class="frase">What sticks is <em>yours</em></div>
+    <div class="trad">O que fica é seu</div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c3s2">
+  <div class="prog" style="width:33.3%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">02/06</div></div>
+  <div class="miolo centro">
+    <div class="numerao">200</div>
+    <h2>dias de ofensiva. Você consegue <span class="lilas">pedir um café</span>?</h2>
+    <p class="apoio">Manter sequência é fácil. Lembrar é o que ninguém mede</p>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c3s3">
+  <div class="prog" style="width:50%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">03/06</div></div>
+  <div class="miolo centro">
+    <div class="passo">
+      <div class="txt">
+        <div class="n">1</div>
+        <h3>Você escolhe o que quer conquistar</h3>
+        <p class="apoio">Vocabulário, frases, sua área. Não é currículo genérico</p>
+      </div>
+      <div class="card">
+        <div class="rot">SEU DECK</div>
+        <div class="deck-nome" style="margin-top:28px">1000 Frases Essenciais</div>
+        <div class="deck-sub">Inglês do dia a dia</div>
+        <div class="barra-ext"><div class="barra-int" style="width:8%"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c3s4">
+  <div class="prog" style="width:66.6%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">04/06</div></div>
+  <div class="miolo centro">
+    <div class="passo">
+      <div class="txt">
+        <div class="n">2</div>
+        <h3>O app já sabe o que revisar</h3>
+        <p class="apoio">Ele calcula o momento antes do esquecimento. Você não decide, só aparece</p>
+      </div>
+      <div class="card">
+        <div class="rot">REVISAR AGORA</div>
+        <div class="frase">She <em>works</em> from home</div>
+        <div class="trad">Ela trabalha de casa</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide" id="c3s5">
+  <div class="prog" style="width:83.3%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">05/06</div></div>
+  <div class="miolo centro">
+    <div class="passo">
+      <div class="txt">
+        <div class="n">3</div>
+        <h3>O conteúdo vira seu para sempre</h3>
+        <p class="apoio">Não é "você estudou". É seu. Conquistado não vai embora</p>
+      </div>
+      <div class="card">
+        <div class="rot">VERSO</div>
+        <div class="frase">She <em>works</em> from home</div>
+        <div class="selo-ok">conquistado</div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape"><span class="esq">arrasta</span><span>@lingrowoficial</span></div>
+</section>
+
+<section class="slide final" id="c3s6">
+  <div class="prog" style="width:100%"></div>
+  <div class="topo"><div class="marca">Lingrow</div><div class="num">06/06</div></div>
+  <div class="miolo">
+    <h1>Não é mais uma tentativa</h1>
+    <h1 class="lilas" style="margin-top:10px">É a última</h1>
+    <div class="card">
+      <div class="rot">SEU PROGRESSO</div>
+      <div class="deck-nome" style="margin-top:26px">1000 Frases Essenciais</div>
+      <div class="barra-ext"><div class="barra-int" style="width:34%"></div></div>
+      <div class="deck-meta"><span>340 frases conquistadas</span><b>34%</b></div>
+    </div>
+    <div class="botao">Grátis na App Store</div>
+  </div>
+  <div class="rodape"><span class="esq">salva esse post</span><span>@lingrowoficial</span></div>
+</section>
+
+<!-- ============ POST UNICO: MANIFESTO (entre o carrossel 2 e o 3) ============ -->
+
+<section class="slide claro final" id="m1">
+  <div class="topo"><div class="marca">Lingrow</div><div class="num"></div></div>
+  <div class="miolo">
+    <div class="barra-manifesto"></div>
+    <h1>Você já aprendeu os dias da semana em inglês 4 vezes</h1>
+    <div class="aparte">(isso que tá te travando)</div>
+    <div class="assinatura">Inglês que não some</div>
+  </div>
+  <div class="rodape"><span class="esq">marca quem recomeça junto</span><span>@lingrowoficial</span></div>
+</section>
+
+<script>
+  var alvo = new URLSearchParams(location.search).get('s');
+  if (alvo) {
+    document.body.classList.add('solo');
+    var el = document.getElementById(alvo);
+    if (el) { el.classList.add('ativo'); }
+  }
+</script>
+
+</body>
+</html>
